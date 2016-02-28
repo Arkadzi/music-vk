@@ -18,16 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import me.gumenniy.arkadiy.vkmusic.pojo.AudioResult;
+import me.gumenniy.arkadiy.vkmusic.pojo.Friend;
+import me.gumenniy.arkadiy.vkmusic.pojo.VKResult;
 import me.gumenniy.arkadiy.vkmusic.pojo.Song;
 import me.gumenniy.arkadiy.vkmusic.pojo.User;
-import me.gumenniy.arkadiy.vkmusic.pojo.VKAudioResponse;
+import me.gumenniy.arkadiy.vkmusic.pojo.VKResponse;
 import me.gumenniy.arkadiy.vkmusic.pojo.VKError;
-import me.gumenniy.arkadiy.vkmusic.rest.event.CancelLoadEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.SongsFailedEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.SongsLoadEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.SongsLoadedEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.SongsNotLoadedEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.DataFailedEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.DataLoadEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.DataNotLoadedEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.songs.SongsLoadedEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.event.TokenRequiredEvent;
 import retrofit.Call;
 import retrofit.Callback;
@@ -61,14 +61,12 @@ public class RestClient {
     private final String baseUrl = "https://api.vk.com/method/";
     private List<Song> songs;
     private Bus mBus;
-    private Retrofit client;
     private VkApiInterface vkApi;
     private User user;
     private boolean isLoading;
-    private Call<AudioResult> call;
 
     public RestClient(Bus bus) {
-        client = getClient();
+        Retrofit client = getClient();
         vkApi = client.create(VkApiInterface.class);
         mBus = bus;
     }
@@ -87,21 +85,19 @@ public class RestClient {
     }
 
     @Subscribe
-    public void onLoadSongs(final SongsLoadEvent event) {
+    public void onLoadSongs(final DataLoadEvent event) {
         Log.e("RestClient", "onLoadSongs() " + event.refresh + " " + user.getId() + " " + user.getToken());
         if (event.refresh) songs = null;
         int offset = (songs == null) ? 0 : songs.size();
-        call = vkApi.getSongs(user.getId(), offset, 100, user.getToken());
+        Call<VKResult<Song>> call = vkApi.getSongs(user.getId(), offset, 100, user.getToken());
         isLoading = true;
-        call.enqueue(new Callback<AudioResult>() {
+        call.enqueue(new Callback<VKResult<Song>>() {
             @Override
-            public void onResponse(retrofit.Response<AudioResult> response, Retrofit retrofit) {
+            public void onResponse(retrofit.Response<VKResult<Song>> response, Retrofit retrofit) {
                 isLoading = false;
                 if (response.isSuccess()) {
                     VKError error = response.body().getError();
-                    VKAudioResponse audioResponse = response.body().getResponse();
-                    Log.e("VKResponse",  response.isSuccess() + " " + response.body());
-                    Log.e("VKResponse",  user.getId() + " " + user.getToken());
+                    VKResponse audioResponse = response.body().getResponse();
                     if (audioResponse != null) {
                         if (songs == null) songs = new ArrayList<>();
 
@@ -117,7 +113,7 @@ public class RestClient {
                         mBus.post(new TokenRequiredEvent());
                     }
                 } else {
-                    mBus.post(new SongsNotLoadedEvent());
+                    mBus.post(new DataNotLoadedEvent());
                 }
             }
 
@@ -125,10 +121,11 @@ public class RestClient {
             public void onFailure(Throwable t) {
                 Log.e("failure", t.getMessage());
                 isLoading = false;
-                mBus.post(new SongsFailedEvent());
+                mBus.post(new DataFailedEvent());
             }
         });
     }
+
 
     @Produce
     public SongsLoadedEvent getLoadedSongs() {
@@ -141,10 +138,16 @@ public class RestClient {
 
     public interface VkApiInterface {
         @GET("audio.get?v=5.45&need_user=0")
-        Call<AudioResult> getSongs(
+        Call<VKResult<Song>> getSongs(
                 @Query("owner_id") String ownerId,
                 @Query("offset") int offset,
                 @Query("count") int count,
                 @Query("access_token") String token);
+
+        @GET("audio.get?v=5.45&order=name&fields=domain,photo_50")
+        Call<VKResult<Friend>> getFriends(
+                @Query("user_id") String userId,
+                @Query("offset") int offset,
+                @Query("count") int count);
     }
 }
