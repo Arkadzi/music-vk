@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">VKMusic</string>
+    <string name="not_loaded">Songs not loaded</string>
+    <string name="failure">Check internet</string>
+    <string name="my_music">My music</string>
+    <string name="friends">Friends</string>
+    <string name="search">Search</string>
+    <string name="groups">Groups</string>
+    <string name="open_menu">Open</string>
+    <string name="close_menu">Close</string>
+    <string name="loaded_songs">Loaded</string>
+</resources>
