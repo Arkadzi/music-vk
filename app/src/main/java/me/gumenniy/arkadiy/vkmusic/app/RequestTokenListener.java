@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic;
+package me.gumenniy.arkadiy.vkmusic.app;
 
 /**
  * Created by Arkadiy on 26.02.2016.

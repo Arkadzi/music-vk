@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic;
+package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -13,7 +13,8 @@ import android.widget.ProgressBar;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import me.gumenniy.arkadiy.vkmusic.pojo.User;
+import me.gumenniy.arkadiy.vkmusic.R;
+import me.gumenniy.arkadiy.vkmusic.model.User;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
 public class LoginActivity extends AppCompatActivity {
@@ -39,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
 
         String url = null;
         try {
-            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio&redirect_uri=%s&response_type=token&display=mobile",
+            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio,friends&redirect_uri=%s&response_type=token&display=mobile",
                     Settings.CLIENT_ID,
                     URLEncoder.encode(Settings.REDIRECT_URI, "UTF-8"));
         } catch (UnsupportedEncodingException e) {

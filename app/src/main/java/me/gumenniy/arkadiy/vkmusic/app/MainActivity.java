@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic;
+package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,11 +10,12 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 
-import me.gumenniy.arkadiy.vkmusic.fragments.ListFragment;
+import me.gumenniy.arkadiy.vkmusic.R;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.FriendListFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.SongListFragment;
 
 public class MainActivity extends AppCompatActivity implements RequestTokenListener {
     private static final int LOGIN = 101;
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         if (fragment == null) {
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.fragment_container, ListFragment.newInstance())
+                    .replace(R.id.fragment_container, SongListFragment.newInstance())
                     .commit();
         }
         prepareDrawer();
@@ -54,9 +55,14 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
                     case R.id.my_music_item:
                         getSupportFragmentManager()
                                 .beginTransaction()
-                                .replace(R.id.fragment_container, ListFragment.newInstance())
+                                .replace(R.id.fragment_container, SongListFragment.newInstance())
                                 .commit();
                         break;
+                    case R.id.friends_item:
+                        getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, FriendListFragment.newInstance())
+                                .commit();
                 }
 
                 return true;

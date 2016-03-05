@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.pojo;
+package me.gumenniy.arkadiy.vkmusic.model;
 
 /**
  * Created by Arkadiy on 24.02.2016.
@@ -9,6 +9,10 @@ public class Song {
     private String artist;
     private String url;
     private long duration;
+
+    public Song() {
+
+    }
 
     public Song(String id, String title, String artist, String url, long duration) {
         this.id = id;

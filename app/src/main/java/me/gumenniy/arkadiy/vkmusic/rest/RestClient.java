@@ -9,28 +9,25 @@ import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
-import com.squareup.otto.Bus;
-import com.squareup.otto.Produce;
-import com.squareup.otto.Subscribe;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import me.gumenniy.arkadiy.vkmusic.pojo.Friend;
-import me.gumenniy.arkadiy.vkmusic.pojo.VKResult;
-import me.gumenniy.arkadiy.vkmusic.pojo.Song;
-import me.gumenniy.arkadiy.vkmusic.pojo.User;
-import me.gumenniy.arkadiy.vkmusic.pojo.VKResponse;
-import me.gumenniy.arkadiy.vkmusic.pojo.VKError;
-import me.gumenniy.arkadiy.vkmusic.rest.event.DataFailedEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.DataLoadEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.DataNotLoadedEvent;
+import me.gumenniy.arkadiy.vkmusic.model.Friend;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.model.Song;
+import me.gumenniy.arkadiy.vkmusic.model.User;
+import me.gumenniy.arkadiy.vkmusic.rest.callback.FriendCallback;
+import me.gumenniy.arkadiy.vkmusic.rest.callback.SongCallback;
+import me.gumenniy.arkadiy.vkmusic.rest.event.friends.FriendsLoadEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.friends.FriendsLoadedEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.event.songs.SongsLoadEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.event.songs.SongsLoadedEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.event.TokenRequiredEvent;
 import retrofit.Call;
-import retrofit.Callback;
 import retrofit.GsonConverterFactory;
 import retrofit.Retrofit;
 import retrofit.http.GET;
@@ -60,15 +57,18 @@ public class RestClient {
 
     private final String baseUrl = "https://api.vk.com/method/";
     private List<Song> songs;
-    private Bus mBus;
+    private EventBus bus;
     private VkApiInterface vkApi;
     private User user;
-    private boolean isLoading;
+    private SongCallback songCallback;
+    private final FriendCallback friendCallback;
 
-    public RestClient(Bus bus) {
+    public RestClient(EventBus bus) {
         Retrofit client = getClient();
         vkApi = client.create(VkApiInterface.class);
-        mBus = bus;
+        this.bus = bus;
+        songCallback = new SongCallback(this.bus);
+        friendCallback = new FriendCallback(this.bus);
     }
 
     @NonNull
@@ -85,51 +85,13 @@ public class RestClient {
     }
 
     @Subscribe
-    public void onLoadSongs(final DataLoadEvent event) {
-        Log.e("RestClient", "onLoadSongs() " + event.refresh + " " + user.getId() + " " + user.getToken());
-        if (event.refresh) songs = null;
-        int offset = (songs == null) ? 0 : songs.size();
-        Call<VKResult<Song>> call = vkApi.getSongs(user.getId(), offset, 100, user.getToken());
-        isLoading = true;
-        call.enqueue(new Callback<VKResult<Song>>() {
-            @Override
-            public void onResponse(retrofit.Response<VKResult<Song>> response, Retrofit retrofit) {
-                isLoading = false;
-                if (response.isSuccess()) {
-                    VKError error = response.body().getError();
-                    VKResponse audioResponse = response.body().getResponse();
-                    if (audioResponse != null) {
-                        if (songs == null) songs = new ArrayList<>();
-
-                        List<Song> newItems = response.body().getResponse().getItems();
-                        Log.e("VKResponse", songs.size() + " " + newItems);
-                        List<Song> items = new ArrayList<>((newItems.size() + songs.size()) * 2);
-                        items.addAll(songs);
-                        items.addAll(newItems);
-                        songs = items;
-                        mBus.post(new SongsLoadedEvent(songs, isLoading));
-
-                    } else {
-                        mBus.post(new TokenRequiredEvent());
-                    }
-                } else {
-                    mBus.post(new DataNotLoadedEvent());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.e("failure", t.getMessage());
-                isLoading = false;
-                mBus.post(new DataFailedEvent());
-            }
-        });
+    public void onSongsLoad(SongsLoadEvent event) {
+        songCallback.onLoadSongs(vkApi, user, event.refresh);
     }
 
-
-    @Produce
-    public SongsLoadedEvent getLoadedSongs() {
-        return new SongsLoadedEvent(songs, isLoading);
+    @Subscribe
+    public void onFriendsLoad(FriendsLoadEvent event) {
+        friendCallback.onLoadSongs(vkApi, user, event.refresh);
     }
 
     public void setUser(User user) {
@@ -144,7 +106,7 @@ public class RestClient {
                 @Query("count") int count,
                 @Query("access_token") String token);
 
-        @GET("audio.get?v=5.45&order=name&fields=domain,photo_50")
+        @GET("friends.get?v=5.45&order=name&fields=domain,photo_50")
         Call<VKResult<Friend>> getFriends(
                 @Query("user_id") String userId,
                 @Query("offset") int offset,

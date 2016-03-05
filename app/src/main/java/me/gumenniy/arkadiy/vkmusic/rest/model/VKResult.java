@@ -1,20 +1,23 @@
-package me.gumenniy.arkadiy.vkmusic.pojo;
+package me.gumenniy.arkadiy.vkmusic.rest.model;
+
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKError;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKResponse;
 
 /**
  * Created by Arkadiy on 25.02.2016.
  */
-public class AudioResult {
+public class VKResult<T> {
     private VKError error;
-    private VKAudioResponse response;
+    private VKResponse<T> response;
 
-    public AudioResult(VKError error) {
+    public VKResult(VKError error) {
         this.error = error;
     }
-    public AudioResult(VKAudioResponse response) {
+    public VKResult(VKResponse<T> response) {
         this.response = response;
     }
 
-    public VKAudioResponse getResponse() {
+    public VKResponse<T> getResponse() {
         return response;
     }
 

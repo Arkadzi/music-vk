@@ -1,11 +1,11 @@
-package me.gumenniy.arkadiy.vkmusic;
+package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.app.Application;
 import android.content.SharedPreferences;
 
-import com.squareup.otto.Bus;
+import org.greenrobot.eventbus.EventBus;
 
-import me.gumenniy.arkadiy.vkmusic.pojo.User;
+import me.gumenniy.arkadiy.vkmusic.model.User;
 import me.gumenniy.arkadiy.vkmusic.rest.RestClient;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
@@ -15,19 +15,20 @@ import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 public class MusicApplication extends Application {
     private RestClient client;
 
-    private Bus mBus;
+    private EventBus bus;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        mBus = new Bus();
+        bus = EventBus.getDefault();
 
-        client = new RestClient(mBus);
+        client = new RestClient(bus);
         restoreUser();
-        mBus.register(client);
+        bus.register(client);
     }
 
-    public Bus getBus() {
-        return mBus;
+    public EventBus getBus() {
+        return bus;
     }
 
     public RestClient getClient() {

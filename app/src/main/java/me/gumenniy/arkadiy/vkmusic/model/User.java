@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.pojo;
+package me.gumenniy.arkadiy.vkmusic.model;
 
 /**
  * Created by Arkadiy on 24.02.2016.

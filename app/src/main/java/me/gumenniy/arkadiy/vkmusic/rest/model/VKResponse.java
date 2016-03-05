@@ -1,20 +1,20 @@
-package me.gumenniy.arkadiy.vkmusic.pojo;
+package me.gumenniy.arkadiy.vkmusic.rest.model;
 
 import java.util.List;
 
 /**
  * Created by Arkadiy on 25.02.2016.
  */
-public class VKAudioResponse {
+public class VKResponse<T> {
     private int count;
-    private List<Song> items;
+    private List<T> items;
 
-    public VKAudioResponse(int count, List<Song> items) {
+    public VKResponse(int count, List<T> items) {
         this.count = count;
         this.items = items;
     }
 
-    public List<Song> getItems() {
+    public List<T> getItems() {
         return items;
     }
 

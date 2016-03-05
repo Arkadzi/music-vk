@@ -17,6 +17,9 @@ public class Paginator {
 
     public void paginate(ListView listView) {
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            int firstVisible;
+            boolean scrollDown;
+
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 mScrollState = scrollState;
@@ -25,9 +28,13 @@ public class Paginator {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if ((totalItemCount - visibleItemCount) == (firstVisibleItem) && mScrollState != 0) {
+
+                if ((totalItemCount - visibleItemCount) == (firstVisibleItem)
+                        && mScrollState != 0
+                        && firstVisibleItem > firstVisible) {
                     pagingRunnable.run();
                 }
+                firstVisible = firstVisibleItem;
             }
         });
     }

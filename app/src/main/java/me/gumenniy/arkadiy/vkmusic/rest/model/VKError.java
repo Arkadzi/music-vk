@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.pojo;
+package me.gumenniy.arkadiy.vkmusic.rest.model;
 
 import com.google.gson.annotations.SerializedName;
 
