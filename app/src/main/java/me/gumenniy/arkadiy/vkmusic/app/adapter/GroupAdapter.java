@@ -5,21 +5,21 @@ import android.content.Context;
 import java.util.List;
 
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.model.Friend;
+import me.gumenniy.arkadiy.vkmusic.model.Group;
 
 /**
  * Created by Arkadiy on 28.02.2016.
  */
-public class FriendAdapter extends AbstractListAdapter<Friend> {
+public class GroupAdapter extends AbstractListAdapter<Group> {
 
-    public FriendAdapter(Context context, List<Friend> data) {
+    public GroupAdapter(Context context, List<Group> data) {
         super(context, data);
     }
 
 
     @Override
     protected int[] getTextViewIds() {
-        return new int[] {R.id.main};
+        return new int[]{R.id.main};
     }
 
     @Override
@@ -28,8 +28,8 @@ public class FriendAdapter extends AbstractListAdapter<Friend> {
     }
 
     @Override
-    protected String[] getText(Friend item) {
-        return new String[] {String.format("%s %s", item.getFirstName(), item.getLastName())};
+    protected String[] getText(Group item) {
+        return new String[]{item.getName()};
     }
 
 

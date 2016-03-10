@@ -1,6 +1,5 @@
 package me.gumenniy.arkadiy.vkmusic.utils;
 
-import android.util.Log;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
@@ -8,14 +7,14 @@ import android.widget.ListView;
  * Created by Arkadiy on 25.02.2016.
  */
 public class Paginator {
-    private Runnable pagingRunnable;
-    private int mScrollState;
-
-    public Paginator(Runnable runnable) {
-        pagingRunnable = runnable;
+    public interface OnPaginateListener {
+        void onPaginate();
     }
+    private int mScrollState;
+    private ListView listView;
+    private OnPaginateListener onPaginateListener;
 
-    public void paginate(ListView listView) {
+    public void paginateListView(ListView listView) {
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             int firstVisible;
             boolean scrollDown;
@@ -23,7 +22,6 @@ public class Paginator {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 mScrollState = scrollState;
-                Log.e("Paginator", String.valueOf(mScrollState));
             }
 
             @Override
@@ -32,10 +30,16 @@ public class Paginator {
                 if ((totalItemCount - visibleItemCount) == (firstVisibleItem)
                         && mScrollState != 0
                         && firstVisibleItem > firstVisible) {
-                    pagingRunnable.run();
+                    if (onPaginateListener != null) {
+                        onPaginateListener.onPaginate();
+                    }
                 }
                 firstVisible = firstVisibleItem;
             }
         });
+    }
+
+    public void setOnPaginateListener(OnPaginateListener onPaginateListener) {
+        this.onPaginateListener = onPaginateListener;
     }
 }

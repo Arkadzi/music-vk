@@ -13,29 +13,29 @@ import android.widget.ProgressBar;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import javax.inject.Inject;
+
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.model.User;
+import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
 public class LoginActivity extends AppCompatActivity {
-    public static final String TOKEN = "token";
-    public static final String UID = "uid";
     private ProgressBar progress;
+    @Inject UserSession user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        WebView webview = (WebView) findViewById(R.id.web);
-        progress = (ProgressBar) findViewById(R.id.progress);
+        MusicApplication.getApp(this).getComponent().inject(this);
 
+        progress = (ProgressBar) findViewById(R.id.progress);
+        WebView webview = (WebView) findViewById(R.id.web);
         webview.getSettings().setJavaScriptEnabled(true);
         webview.setVerticalScrollBarEnabled(false);
         webview.setHorizontalScrollBarEnabled(false);
         webview.clearCache(true);
-
-        //Чтобы получать уведомления об окончании загрузки страницы
         webview.setWebViewClient(new VkWebViewClient());
 
         String url = null;
@@ -61,13 +61,9 @@ public class LoginActivity extends AppCompatActivity {
                 if (!url.contains("error")) {
                     String token = extractValue(url, "access_token");
                     String userId = extractValue(url, "user_id");
-                    Log.e("token", token + " " + userId);
-                    SharedPreferences.Editor editor = getSharedPreferences(Settings.PREFS, MODE_PRIVATE).edit();
-                    editor.putString(TOKEN, token);
-                    editor.putString(UID, userId);
-                    editor.commit();
-                    User user = new User(token, userId);
-                    ((MusicApplication) getApplication()).getClient().setUser(user);
+//                    Log.e("User", String.valueOf(user));
+
+                    saveUser(token, userId);
                     finishSelf();
                 } else {
                     finishSelf();
@@ -77,6 +73,10 @@ public class LoginActivity extends AppCompatActivity {
             Log.e("LoginActivity", e.getMessage());
             finishSelf();
         }
+    }
+
+    private void saveUser(String token, String userId) {
+        user.update(userId, token);
     }
 
     private void finishSelf() {

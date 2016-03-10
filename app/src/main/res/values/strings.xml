@@ -9,4 +9,9 @@
     <string name="open_menu">Open</string>
     <string name="close_menu">Close</string>
     <string name="loaded_songs">Loaded</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="loading">Loading...</string>
+    <string name="check_time">Check current time set on your device</string>
 </resources>

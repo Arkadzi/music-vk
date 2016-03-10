@@ -13,35 +13,48 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.app.fragments.FriendListFragment;
-import me.gumenniy.arkadiy.vkmusic.app.fragments.SongListFragment;
+import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
+import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
+import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
+import me.gumenniy.arkadiy.vkmusic.view.SongListFragment;
 
 public class MainActivity extends AppCompatActivity implements RequestTokenListener {
     private static final int LOGIN = 101;
 
-    private Toolbar toolbar;
-    private DrawerLayout drawerLayout;
+    @Bind(R.id.tool_bar)
+    Toolbar toolbar;
+    @Bind(R.id.drawer)
+    DrawerLayout drawerLayout;
+    @Bind(R.id.navigation_view)
+    NavigationView navigationView;
+    private Fragment fragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        toolbar = (Toolbar) findViewById(R.id.tool_bar);
+        ButterKnife.bind(this);
+
         setSupportActionBar(toolbar);
+        prepareDrawer();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment == null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, SongListFragment.newInstance())
-                    .commit();
+            startFragment(SongListFragment.newInstance(SongListPresenter.CURRENT_USER));
+            navigationView.setCheckedItem(R.id.my_music_item);
         }
-        prepareDrawer();
+    }
+
+    private void startFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
     }
 
     private void prepareDrawer() {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem) {
@@ -51,31 +64,30 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
                     fm.popBackStack();
                 }
                 switch (menuItem.getItemId()) {
-                    //Replacing the main content with ContentFragment Which is our Inbox View;
                     case R.id.my_music_item:
-                        getSupportFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.fragment_container, SongListFragment.newInstance())
-                                .commit();
+                        fragment = SongListFragment.newInstance(SongListPresenter.CURRENT_USER);
                         break;
                     case R.id.friends_item:
-                        getSupportFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.fragment_container, FriendListFragment.newInstance())
-                                .commit();
+                        fragment = FriendListFragment.newInstance();
+                        break;
+                    case R.id.groups_item:
+                        fragment = GroupListFragment.newInstance();
+                        break;
                 }
 
                 return true;
             }
         });
 
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                 this, drawerLayout, toolbar, R.string.open_menu, R.string.close_menu) {
 
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
+                if (fragment != null) {
+                    startFragment(fragment);
+                }
             }
 
             @Override

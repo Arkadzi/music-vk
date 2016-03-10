@@ -10,6 +10,10 @@ public class VKResult<T> {
     private VKError error;
     private VKResponse<T> response;
 
+    public boolean isSuccessful() {
+        return error == null && response != null;
+    }
+
     public VKResult(VKError error) {
         this.error = error;
     }
