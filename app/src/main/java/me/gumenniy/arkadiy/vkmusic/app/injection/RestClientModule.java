@@ -11,6 +11,8 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -86,5 +88,11 @@ public class RestClientModule {
     @Singleton
     UserSession provideUserSession(SharedPreferences prefs) {
         return new UserSession(prefs);
+    }
+
+    @Provides
+    @Singleton
+    EventBus provideEventBus() {
+        return EventBus.getDefault();
     }
 }

@@ -11,13 +11,11 @@ public class Paginator {
         void onPaginate();
     }
     private int mScrollState;
-    private ListView listView;
     private OnPaginateListener onPaginateListener;
 
     public void paginateListView(ListView listView) {
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             int firstVisible;
-            boolean scrollDown;
 
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {

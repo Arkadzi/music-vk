@@ -1,5 +1,9 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -22,11 +26,19 @@ public class FriendListPresenter extends BaseListPresenter<Friend> {
     }
 
     @Override
+    @NotNull
     protected Call<VKResult<Friend>> getApiCall(VkApi api, UserSession user) {
         return api.getFriends(user.getClientId(), getData().size(), 100);
     }
 
     @Override
     public void handleClick(int position) {
+        Friend item = getData().get(position);
+        if (item.isAudioAvailable()) {
+            BaseView<Friend> view = getView();
+            view.navigateBy(item);
+        } else {
+            showError("201");
+        }
     }
 }

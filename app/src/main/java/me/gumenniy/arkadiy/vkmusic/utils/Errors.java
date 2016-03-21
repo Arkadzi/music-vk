@@ -11,6 +11,8 @@ public class Errors {
     private static final HashMap<String, Integer> ERRORS = new HashMap<>();
     static {
         ERRORS.put("ExtCertPathValidatorException", R.string.check_time);
+        ERRORS.put("201", R.string.user_audio_access_denied);
+        ERRORS.put("-201", R.string.group_audio_access_denied);
     }
 
     public static Integer get(String s) {

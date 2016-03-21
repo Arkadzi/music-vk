@@ -1,12 +1,16 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.Nullable;
 import android.util.Log;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKError;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import retrofit.Call;
 import retrofit.Callback;
@@ -16,28 +20,32 @@ import retrofit.Retrofit;
 /**
  * Created by Arkadiy on 07.03.2016.
  */
-public abstract class BaseListPresenter<D> {
+public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>> {
     public static final int STATE_FIRST_LOAD = 0;
     public static final int STATE_PAGINATE = 1;
     public static final int STATE_REFRESH = 2;
     public static final int STATE_IDLE = 3;
     public static final int STATE_FIRST_BIND = 4;
-
-    private int count;
-    private BaseView<List<D>> view;
-    private List<D> data;
     protected int state;
+    private int count;
+    @Nullable
+    private BaseView<D> view;
+    @NotNull
+    private List<D> data;
+    @NotNull
     private VkApi vkApi;
+    @NotNull
     private UserSession user;
 
-    public BaseListPresenter(VkApi api, UserSession user) {
+    public BaseListPresenter(@NotNull VkApi api, @NotNull UserSession user) {
+        Log.e("listpresenter", hashCode() + " " + api.hashCode());
         this.vkApi = api;
         this.user = user;
         reset();
     }
 
-    public void bindView(BaseView<List<D>> view) {
-        Log.e("BaseListPresenter", String.valueOf(view));
+    @Override
+    public void bindView(@Nullable BaseView<D> view) {
         this.view = view;
         if (view != null) {
             if (state == STATE_FIRST_BIND) {
@@ -82,7 +90,7 @@ public abstract class BaseListPresenter<D> {
 
     }
 
-    private void showError(String s) {
+    protected void showError(String s) {
         Log.e("Presenter", "error " + s);
         if (view != null) {
             view.showError(s);
@@ -95,10 +103,26 @@ public abstract class BaseListPresenter<D> {
             data.addAll(result.getResponse().getItems());
             count = result.getResponse().getCount();
         } else if (view != null) {
-            view.requestNewToken();
+            if (!handled(result.getError())) {
+                view.requestNewToken();
+            }
         }
     }
 
+    protected boolean handled(VKError error) {
+        switch (error.getErrorCode()) {
+            case 15:
+                showError(error.getErrorMessage());
+                if (view != null) {
+                    view.dismiss();
+                }
+                break;
+            default:return false;
+        }
+        return true;
+    }
+
+    @NotNull
     protected abstract Call<VKResult<D>> getApiCall(VkApi api, UserSession user);
 
     public void refresh() {
@@ -124,17 +148,19 @@ public abstract class BaseListPresenter<D> {
         state = STATE_IDLE;
 
         if (view != null) {
-            view.hideProgress();
             view.renderData(data);
+            view.hideProgress();
         }
     }
 
     public abstract void handleClick(int position);
 
-    public BaseView<List<D>> getView() {
+    @Nullable
+    public BaseView<D> getView() {
         return view;
     }
 
+    @NotNull
     public List<D> getData() {
         return data;
     }

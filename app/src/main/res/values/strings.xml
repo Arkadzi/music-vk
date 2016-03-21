@@ -14,4 +14,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="loading">Loading...</string>
     <string name="check_time">Check current time set on your device</string>
+    <string name="user_audio_access_denied">Access to users audio is denied</string>
+    <string name="no_data">No data</string>
+    <string name="group_audio_access_denied">Group audio access denied</string>
 </resources>

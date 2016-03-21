@@ -13,16 +13,13 @@ public class Friend {
     private String lastName;
     @SerializedName("photo_50")
     private String photo;
+    @SerializedName("can_see_audio")
+    private int isAudioAvailable;
+
+
 
     public Friend() {
 
-    }
-
-    public Friend(long id, String firstName, String lastName, String photo) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.photo = photo;
     }
 
     public long getId() {
@@ -39,5 +36,9 @@ public class Friend {
 
     public String getPhoto() {
         return photo;
+    }
+
+    public boolean isAudioAvailable() {
+        return isAudioAvailable == 1;
     }
 }

@@ -10,6 +10,7 @@ public class Group {
     private String name;
     @SerializedName("photo_50")
     private String photo;
+    private boolean isAudioAvailable = true;
 
     public Group() {
 
@@ -19,6 +20,10 @@ public class Group {
         this.id = id;
         this.name = name;
         this.photo = photo;
+    }
+
+    public void setIsAudioAvailable(boolean isAudioAvailable) {
+        this.isAudioAvailable = isAudioAvailable;
     }
 
     public long getId() {
@@ -31,5 +36,9 @@ public class Group {
 
     public String getPhoto() {
         return photo;
+    }
+
+    public boolean isAudioAvailable() {
+        return isAudioAvailable;
     }
 }

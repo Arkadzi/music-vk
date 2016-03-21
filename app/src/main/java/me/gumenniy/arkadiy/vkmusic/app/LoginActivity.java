@@ -40,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
 
         String url = null;
         try {
-            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio,friends&redirect_uri=%s&response_type=token&display=mobile",
+            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio,friends,groups&redirect_uri=%s&response_type=token&display=mobile",
                     Settings.CLIENT_ID,
                     URLEncoder.encode(Settings.REDIRECT_URI, "UTF-8"));
         } catch (UnsupportedEncodingException e) {

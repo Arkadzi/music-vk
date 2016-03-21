@@ -8,13 +8,13 @@ public class Song {
     private String title;
     private String artist;
     private String url;
-    private long duration;
+    private int duration;
 
     public Song() {
 
     }
 
-    public Song(String id, String title, String artist, String url, long duration) {
+    public Song(String id, String title, String artist, String url, int duration) {
         this.id = id;
         this.title = title;
         this.artist = artist;
@@ -22,7 +22,7 @@ public class Song {
         this.duration = duration;
     }
 
-    public long getDuration() {
+    public int getDuration() {
         return duration;
     }
 

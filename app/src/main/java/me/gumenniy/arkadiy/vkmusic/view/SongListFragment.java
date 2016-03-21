@@ -8,11 +8,10 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
-import me.gumenniy.arkadiy.vkmusic.presenter.BaseListPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 
 /**
@@ -21,9 +20,27 @@ import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 public class SongListFragment extends BaseListFragment<Song, SongListPresenter> {
     private static final String USER_ID = "user_id";
 
+    public static Fragment newInstance(String userId, String title) {
+        SongListFragment fragment = new SongListFragment();
+
+        Bundle args = new Bundle();
+        args.putString(USER_ID, userId);
+        args.putString(TITLE, title);
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
     @Override
     protected void inject(RestComponent component) {
         component.inject(this);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTitle(getArguments().getString(TITLE));
+
     }
 
     @Override
@@ -36,15 +53,4 @@ public class SongListFragment extends BaseListFragment<Song, SongListPresenter> 
     protected AbstractListAdapter<Song> getListAdapter() {
         return new SongAdapter(getActivity(), new ArrayList<Song>());
     }
-
-    public static Fragment newInstance(String userId) {
-        SongListFragment fragment = new SongListFragment();
-
-        Bundle args = new Bundle();
-        args.putString(USER_ID, userId);
-        fragment.setArguments(args);
-
-        return fragment;
-    }
-
 }
