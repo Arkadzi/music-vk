@@ -19,11 +19,13 @@ import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
  */
 public class SongListFragment extends BaseListFragment<Song, SongListPresenter> {
     private static final String USER_ID = "user_id";
+    private static final String RECOMMENDED = "recommended";
 
-    public static Fragment newInstance(String userId, String title) {
+    public static Fragment newInstance(String userId, String title, boolean recommended) {
         SongListFragment fragment = new SongListFragment();
 
         Bundle args = new Bundle();
+        args.putBoolean(RECOMMENDED, recommended);
         args.putString(USER_ID, userId);
         args.putString(TITLE, title);
         fragment.setArguments(args);
@@ -40,12 +42,13 @@ public class SongListFragment extends BaseListFragment<Song, SongListPresenter> 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(getArguments().getString(TITLE));
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getPresenter().setUserId(getArguments().getString(USER_ID, SongListPresenter.CURRENT_USER));
+        String userId = getArguments().getString(USER_ID, SongListPresenter.CURRENT_USER);
+        boolean recommended = getArguments().getBoolean(RECOMMENDED);
+        getPresenter().setUserId(userId,  recommended);
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 

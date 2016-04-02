@@ -12,6 +12,12 @@
             android:title="@string/my_music" />
 
         <item
+            android:id="@+id/popular_item"
+            android:checked="false"
+            android:icon="@drawable/ic_library_music_white_36dp"
+            android:title="@string/popular" />
+
+        <item
             android:id="@+id/friends_item"
             android:checked="false"
             android:icon="@drawable/ic_person_white_36dp"
@@ -32,6 +38,13 @@
     </group>
     <group android:checkableBehavior="single"
         android:id="@+id/group_2">
+
+
+        <item
+            android:id="@+id/recommend_item"
+            android:checked="false"
+            android:icon="@drawable/ic_thumb_up_white_36dp"
+            android:title="@string/recommended" />
 
         <item
             android:id="@+id/search_item"

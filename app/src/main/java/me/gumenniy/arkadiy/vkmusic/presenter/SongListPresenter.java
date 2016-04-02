@@ -1,20 +1,13 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.os.PowerManager;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import me.gumenniy.arkadiy.vkmusic.app.Player;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.AccessDeniedEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
@@ -36,6 +29,7 @@ public class SongListPresenter extends BaseListPresenter<Song> {
     private final EventBus eventBus;
     @NotNull
     private String userId;
+    private boolean recommended;
 
     @Inject
     public SongListPresenter(VkApi api, UserSession user, @NotNull EventBus eventBus) {
@@ -55,7 +49,12 @@ public class SongListPresenter extends BaseListPresenter<Song> {
     @NotNull
     protected Call<VKResult<Song>> getApiCall(VkApi api, UserSession user) {
         String ownerId = (userId.equals(CURRENT_USER)) ? user.getClientId() : userId;
-        return api.getSongs(ownerId, getData().size(), 3, user.getToken());
+        api.getRecommendedSongs(ownerId, getData().size(), 3, user.getToken());
+        if (recommended) {
+            return api.getRecommendedSongs(ownerId, getData().size(), 3, user.getToken());
+        } else {
+            return api.getSongs(ownerId, getData().size(), 3, user.getToken());
+        }
     }
 
     @Override
@@ -64,9 +63,10 @@ public class SongListPresenter extends BaseListPresenter<Song> {
         eventBus.post(new PlayQueueEvent(getData(), position));
     }
 
-    public void setUserId(@NotNull String userId) {
-        if (!userId.equals(this.userId)) {
+    public void setUserId(@NotNull String userId, boolean recommended) {
+        if (!userId.equals(this.userId) || recommended != this.recommended) {
             this.userId = userId;
+            this.recommended = recommended;
             reset();
         }
     }

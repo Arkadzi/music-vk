@@ -37,7 +37,10 @@ import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
+import me.gumenniy.arkadiy.vkmusic.view.OnBackPressListener;
 import me.gumenniy.arkadiy.vkmusic.view.PlaybackView;
+import me.gumenniy.arkadiy.vkmusic.view.PopularSongsFragment;
+import me.gumenniy.arkadiy.vkmusic.view.SearchFragment;
 import me.gumenniy.arkadiy.vkmusic.view.SongListFragment;
 
 public class MainActivity extends AppCompatActivity implements RequestTokenListener, PlaybackView {
@@ -70,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
-            Player service = ((VKMusicService.MusicBinder) binder).getService();
+            Player service = ((MusicService.MusicBinder) binder).getService();
             presenter.setPlayer(service);
         }
 
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         startService();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment == null) {
-            startFragment(SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music)));
+            startFragment(SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music), false));
             navigationView.setCheckedItem(R.id.my_music_item);
         }
     }
@@ -119,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     @Override
     protected void onStart() {
         super.onStart();
-        Intent intent = new Intent(this, VKMusicService.class);
+        Intent intent = new Intent(this, MusicService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
 
@@ -136,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     private void startService() {
-        Intent intent = new Intent(this, VKMusicService.class);
+        Intent intent = new Intent(this, MusicService.class);
         startService(intent);
     }
 
@@ -146,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         super.onDestroy();
         presenter.bindView(null);
         if (isFinishing()) {
-            Intent intent = new Intent(this, VKMusicService.class);
+            Intent intent = new Intent(this, MusicService.class);
             stopService(intent);
         }
     }
@@ -169,13 +172,22 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
                 }
                 switch (menuItem.getItemId()) {
                     case R.id.my_music_item:
-                        fragment = SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music));
+                        fragment = SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music), false);
                         break;
                     case R.id.friends_item:
                         fragment = FriendListFragment.newInstance(getString(R.string.friends));
                         break;
                     case R.id.groups_item:
                         fragment = GroupListFragment.newInstance(getString(R.string.groups));
+                        break;
+                    case R.id.recommend_item:
+                        fragment = SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.recommended), true);
+                        break;
+                    case R.id.popular_item:
+                        fragment = PopularSongsFragment.newInstance(getString(R.string.popular));
+                        break;
+                    case R.id.search_item:
+                        fragment = SearchFragment.newInstance(getString(R.string.search));
                         break;
                 }
 
@@ -218,7 +230,11 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         } else if (panel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
             panel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         } else {
-            super.onBackPressed();
+            OnBackPressListener fragment = (OnBackPressListener) getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_container);
+            if (fragment == null || !fragment.backPressHandled()) {
+                super.onBackPressed();
+            }
         }
     }
 

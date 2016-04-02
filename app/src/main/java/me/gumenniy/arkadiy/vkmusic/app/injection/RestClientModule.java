@@ -21,8 +21,10 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
+import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.VKResponseTypeAdapter;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import retrofit.GsonConverterFactory;
 import retrofit.Retrofit;
 
@@ -62,7 +64,7 @@ public class RestClientModule {
     @Singleton
     public Retrofit provideRetrofit(OkHttpClient okClient) {
         Gson gson = new GsonBuilder()
-//                .registerTypeAdapter(VKResponse.class, new VKResponseTypeAdapter())
+                .registerTypeAdapter(VKResult.class, new VKResponseTypeAdapter())
                 .create();
 
         return new Retrofit.Builder()

@@ -51,7 +51,7 @@ public class GroupListFragment extends BaseListFragment<Group, GroupListPresente
 
         getFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, SongListFragment.newInstance(groupId, title))
+                .replace(R.id.fragment_container, SongListFragment.newInstance(groupId, title, false))
                 .addToBackStack(null)
                 .commit();
     }

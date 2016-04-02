@@ -17,4 +17,59 @@
     <string name="user_audio_access_denied">Access to users audio is denied</string>
     <string name="no_data">No data</string>
     <string name="group_audio_access_denied">Group audio access denied</string>
+    <string name="recommended">Recommended</string>
+    <string name="popular">Popular</string>
+    <string name="choose_genre">Choose genre</string>
+    <string name="show_only_eng">Show only foreign songs</string>
+    <string name="only_eng">Only foreign</string>
+    <string name="only_performer">Only performer</string>
+    <string-array name="genres" >
+        <item>All</item>
+        <item>Rock</item>
+        <item>Pop</item>
+        <item>Rap &amp; Hip-Hop</item>
+        <item>Easy Listening</item>
+        <item>Dance &amp; House</item>
+        <item>Instrumental</item>
+        <item>Metal</item>
+        <item>Alternative</item>
+        <item>Dubstep</item>
+        <item>Jazz &amp; Blues</item>
+        <item>Drum &amp; Bass</item>
+        <item>Trance</item>
+        <item>Chanson</item>
+        <item>Ethnic</item>
+        <item>Acoustic &amp; Vocal</item>
+        <item>Reggae</item>
+        <item>Classical</item>
+        <item>Indie Pop</item>
+        <item>Speech</item>
+        <item>Electropop &amp; Disco</item>
+        <item>Other</item>
+    </string-array>
+
+    <integer-array name="genre_ids" >
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>21</item>
+        <item>8</item>
+        <item>1001</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>19</item>
+        <item>22</item>
+        <item>18</item>
+    </integer-array>
 </resources>

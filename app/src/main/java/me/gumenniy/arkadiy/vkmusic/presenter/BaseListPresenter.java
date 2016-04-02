@@ -36,6 +36,8 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     private VkApi vkApi;
     @NotNull
     private UserSession user;
+    @Nullable
+    private Call<VKResult<D>> call;
 
     public BaseListPresenter(@NotNull VkApi api, @NotNull UserSession user) {
         Log.e("listpresenter", hashCode() + " " + api.hashCode());
@@ -60,16 +62,27 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
     protected void reset() {
+        if (call != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (call != null) {
+                        call.cancel();
+                        call = null;
+                    }
+                }
+            }).start();
+        }
         state = STATE_FIRST_BIND;
         data = new ArrayList<>();
         count = -1;
     }
 
 
-    public void loadData(int state) {
+    protected void loadData(int state) {
         onLoadingStart(state);
 
-        Call<VKResult<D>> call = getApiCall(vkApi, user);
+        call = getApiCall(vkApi, user);
         call.enqueue(new Callback<VKResult<D>>() {
             @Override
             public void onResponse(Response<VKResult<D>> response, Retrofit retrofit) {
@@ -79,12 +92,14 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
                     showError(String.valueOf(response.errorBody()));
                 }
                 onLoadingStop();
+                call = null;
             }
 
             @Override
             public void onFailure(Throwable t) {
                 onLoadingStop();
-                showError(t.getMessage());
+                showError(t.toString());
+                call = null;
             }
         });
 
@@ -100,8 +115,8 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
 
     private void successfulResponse(VKResult<D> result) {
         if (result.isSuccessful()) {
-            data.addAll(result.getResponse().getItems());
-            count = result.getResponse().getCount();
+            data.addAll(result.getData());
+            count = result.getCount();
         } else if (view != null) {
             if (!handled(result.getError())) {
                 view.requestNewToken();
@@ -126,7 +141,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     protected abstract Call<VKResult<D>> getApiCall(VkApi api, UserSession user);
 
     public void refresh() {
-        data.clear();
+        reset();
         loadData(STATE_REFRESH);
     }
 
@@ -136,7 +151,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         }
     }
 
-    private void onLoadingStart(int state) {
+    protected void onLoadingStart(int state) {
         this.state = state;
 
         if (view != null) {
@@ -144,7 +159,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         }
     }
 
-    private void onLoadingStop() {
+    protected void onLoadingStop() {
         state = STATE_IDLE;
 
         if (view != null) {

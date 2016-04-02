@@ -1,5 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by Arkadiy on 24.02.2016.
  */

@@ -4,9 +4,13 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -14,6 +18,13 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,18 +36,20 @@ import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
 /**
  * Created by Arkadiy on 18.03.2016.
  */
-public class VKMusicService extends Service implements Player,
+public class MusicService extends Service implements Player,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener,
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener {
 
-    private static final int BUFFER_LOOP_MAX_COUNT = 20;
+
+    private static final int BUFFER_LOOP_MAX_COUNT = 35;
     private final IBinder musicBind = new MusicBinder();
     @Inject
     EventBus eventBus;
     boolean firstTime = true;
     private int bufferLoopedCount;
+    private int prevPercent;
     private MediaPlayer player;
     @NotNull
     private List<Song> queue;
@@ -45,6 +58,7 @@ public class VKMusicService extends Service implements Player,
     @Nullable
     private PlayerListener playerListener;
     private boolean shouldStart;
+    private int savedPosition;
 
     @Override
     public void onCreate() {
@@ -64,7 +78,6 @@ public class VKMusicService extends Service implements Player,
 
     private void initMediaPlayer() {
         player = new MediaPlayer();
-
         player.setWakeMode(getApplicationContext(),
                 PowerManager.PARTIAL_WAKE_LOCK);
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -89,7 +102,42 @@ public class VKMusicService extends Service implements Player,
         if (playerListener != null) {
             playerListener.onQueueChanged(getQueue(), getCurrentPosition());
         }
-        resetPlayer();
+
+//        resetPlayer(true);
+//        new AsyncTask<Song, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Song... params) {
+//                try {
+//                    String file = String.format("%s/%s.mp3",
+//                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
+//                            params[0].getTitle());
+//                    URL url = new URL(params[0].getUrl());
+//                    URLConnection urlConnection = url.openConnection();
+//                    urlConnection.connect();
+//                    int fileSize = urlConnection.getContentLength();
+//                    BufferedInputStream is = new BufferedInputStream(urlConnection.getInputStream());
+//                    BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+//                    byte[] buffer = new byte[1024];
+//                    int byteRead;
+//                    int totalRead = 0;
+//                    while ((byteRead = is.read(buffer)) > 0) {
+//                        os.write(buffer, 0, byteRead);
+//                        totalRead += byteRead;
+//                        Log.e("Async", totalRead + " of " + fileSize + " " + ((100 * totalRead) / fileSize) + " %%");
+//                    }
+//                    is.close();
+//                    os.close();
+//
+//                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(file))));
+//
+//
+//                } catch (Exception e) {
+//                    Log.e("Async", "exception " + e.toString());
+//                }
+//                Log.e("Async", "over");
+//                return null;
+//            }
+//        }.execute(getCurrentSong());
     }
 
     @Nullable
@@ -102,7 +150,7 @@ public class VKMusicService extends Service implements Player,
     @Override
     public void onPrepared(MediaPlayer mp) {
         isPrepared = true;
-        resetBufferCount();
+        seekTo(savedPosition);
         if (isShouldStart()) {
             start();
         }
@@ -161,7 +209,7 @@ public class VKMusicService extends Service implements Player,
         if (!isQueueEmpty()) {
             currentPosition = (++currentPosition) % getQueue().size();
 
-            resetPlayer();
+            resetPlayer(true);
         }
     }
 
@@ -170,7 +218,7 @@ public class VKMusicService extends Service implements Player,
         if (!isQueueEmpty()) {
             currentPosition = (--currentPosition + getQueue().size()) % getQueue().size();
 
-            resetPlayer();
+            resetPlayer(true);
         }
     }
 
@@ -207,14 +255,17 @@ public class VKMusicService extends Service implements Player,
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Log.e("MusicService", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (!isPrepared() || !isPlaying()), bufferLoopedCount));
-        if (!isPrepared() || !isPlaying()) {
+        Log.e("MusicService", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
+        if ((prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
-                resetPlayer();
+                resetPlayer(false);
                 return;
             }
+        } else {
+            resetBufferCount();
         }
+        prevPercent = percent;
 
         if (playerListener != null) {
             playerListener.onSongBuffering(percent, player.getCurrentPosition());
@@ -227,21 +278,12 @@ public class VKMusicService extends Service implements Player,
         resetBufferCount();
         final Song playSong = getCurrentSong();
         if (playSong != null) {
-//            new Thread() {
-//                @Override
-//                public synchronized void start() {
-//                    resetPlayer();
-//                    try {
-//                        player.reset();
-//                        player.setDataSource(playSong.getUrl());
-//                        player.prepare();
-//                        ;
-//                    } catch (Exception e) {
-//                        Log.e("VKMusicService", String.valueOf(e));
-//                    }
-//                }
-//            }.run();
-//
+            try {
+                player.setDataSource(playSong.getUrl());
+                player.prepareAsync();
+            } catch (Exception e) {
+                Log.e("MusicService", String.valueOf(e));
+            }
             if (playerListener != null) {
                 playerListener.onBeginPreparingSong(getCurrentSong());
             }
@@ -249,14 +291,20 @@ public class VKMusicService extends Service implements Player,
         Log.e("debug", "playSong() end");
     }
 
-    private void resetPlayer() {
+    private void resetPlayer(boolean resetPosition) {
         Log.e("debug", "resetPlayer()");
-        if (firstTime || isPrepared()) {
-            player.reset();
-            firstTime = false;
+        if (isPrepared() && !resetPosition) {
+            savedPosition = getCurrentPosition();
         } else {
-            actionCancel();
+            savedPosition = 0;
         }
+//        if (firstTime || isPrepared()) {
+        player.reset();
+//            firstTime = false;
+//        } else {
+//            actionCancel();
+//        }
+        playSong();
         Log.e("debug", "resetPlayer() end");
     }
 
@@ -300,8 +348,8 @@ public class VKMusicService extends Service implements Player,
     }
 
     public class MusicBinder extends Binder {
-        public VKMusicService getService() {
-            return VKMusicService.this;
+        public MusicService getService() {
+            return MusicService.this;
         }
     }
 }

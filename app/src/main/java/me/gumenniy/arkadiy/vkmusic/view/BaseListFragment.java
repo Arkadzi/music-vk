@@ -40,7 +40,8 @@ import me.gumenniy.arkadiy.vkmusic.utils.Paginator;
 public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extends Fragment
         implements BaseView<D>, Paginator.OnPaginateListener,
         SwipeRefreshLayout.OnRefreshListener,
-        AdapterView.OnItemClickListener {
+        AdapterView.OnItemClickListener,
+        OnBackPressListener {
 
     @Bind(R.id.list) ListView listView;
     @Bind(R.id.progress_bar) ProgressBar progressBar;
@@ -190,5 +191,10 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     public void requestNewToken() {
         Intent intent = new Intent(getActivity(), LoginActivity.class);
         getActivity().startActivity(intent);
+    }
+
+    @Override
+    public boolean backPressHandled() {
+        return false;
     }
 }

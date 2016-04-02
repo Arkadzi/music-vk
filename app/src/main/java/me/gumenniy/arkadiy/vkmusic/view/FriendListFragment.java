@@ -50,7 +50,7 @@ public class FriendListFragment extends BaseListFragment<Friend, FriendListPrese
 
         getFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, SongListFragment.newInstance(userId, title))
+                .replace(R.id.fragment_container, SongListFragment.newInstance(userId, title, false))
                 .addToBackStack(null)
                 .commit();
     }
