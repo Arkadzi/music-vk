@@ -3,6 +3,7 @@ package me.gumenniy.arkadiy.vkmusic.app;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -10,11 +11,14 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
@@ -32,6 +36,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.gumenniy.arkadiy.vkmusic.R;
+import me.gumenniy.arkadiy.vkmusic.app.adapter.ArtworkAdapter;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
@@ -53,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     NavigationView navigationView;
     @Bind(R.id.sliding_up_panel)
     SlidingUpPanelLayout panel;
+    @Bind(R.id.pager)
+    ViewPager pager;
     @Bind(R.id.prev_button)
     ImageButton prevButton;
     @Bind(R.id.pp_button)
@@ -67,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     SeekBar seekBar;
     @Inject
     PlaybackPresenter presenter;
+    private ArtworkAdapter adapter;
     @Nullable
     private Fragment fragment;
     private ServiceConnection connection = new ServiceConnection() {
@@ -75,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         public void onServiceConnected(ComponentName name, IBinder binder) {
             Player service = ((MusicService.MusicBinder) binder).getService();
             presenter.setPlayer(service);
+
         }
 
         @Override
@@ -93,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         setSupportActionBar(toolbar);
         prepareDrawer();
         initSlidingPanel();
+        preparePager();
         initSeekBar();
         presenter.bindView(this);
         startService();
@@ -103,14 +113,39 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         }
     }
 
+    private void preparePager() {
+        adapter = new ArtworkAdapter(this, presenter);
+        pager.setAdapter(adapter);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if (v instanceof SearchView.SearchAutoComplete) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                    SearchFragment fragment = (SearchFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+                    if (fragment != null) {
+                        fragment.clearFocus();
+                    }
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
     private void initSeekBar() {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { }
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
@@ -134,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     private void initSlidingPanel() {
-        panel.addPanelSlideListener(new SlidingUpPanelLayout.SimplePanelSlideListener());
         panel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
 
@@ -223,16 +257,27 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         startActivity(intent);
     }
 
-    @Override
-    public void onBackPressed() {
+
+    public boolean handleBackPress() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
+
+            return true;
         } else if (panel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
             panel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-        } else {
+
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!handleBackPress()) {
             OnBackPressListener fragment = (OnBackPressListener) getSupportFragmentManager()
                     .findFragmentById(R.id.fragment_container);
-            if (fragment == null || !fragment.backPressHandled()) {
+
+            if (!(fragment != null && fragment.backPressHandled())) {
                 super.onBackPressed();
             }
         }
@@ -240,12 +285,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
 
     @Override
     public void setQueue(List<Song> queue) {
-
-    }
-
-    @Override
-    public void setPosition(int position) {
-
+        adapter.setData(queue);
     }
 
     public void enableControlPanel() {
@@ -255,10 +295,11 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     @Override
-    public void renderSong(@NotNull Song song) {
+    public void renderSong(int position, @NotNull Song song) {
         songNameView.setText(song.getTitle());
         artistNameView.setText(song.getArtist());
         seekBar.setMax(song.getDuration());
+        pager.setCurrentItem(position);
         setBufferProgress(0, 0);
         enableControlPanel();
     }
@@ -274,6 +315,14 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     public void setBufferProgress(int percent, int progress) {
         seekBar.setSecondaryProgress(seekBar.getMax() * percent / 100);
         seekBar.setProgress(progress);
+    }
+
+    @Override
+    public void renderImage(Song song, String url) {
+        View view = pager.findViewWithTag(song.getKey());
+        if (view != null) {
+            adapter.updateView(view, url);
+        }
     }
 
     @OnClick(R.id.prev_button)

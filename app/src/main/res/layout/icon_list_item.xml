@@ -7,12 +7,21 @@
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="@dimen/image_height"
+        android:layout_height="@dimen/image_height"
+        android:layout_marginEnd="@dimen/list_padding"
+        android:layout_marginLeft="@dimen/list_padding"
+        android:layout_marginRight="@dimen/list_padding"
+        android:layout_marginStart="@dimen/list_padding" />
+
     <LinearLayout
         android:layout_width="0dp"
-        android:padding="@dimen/list_padding"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="@dimen/list_padding">
 
         <TextView
             android:id="@+id/main"
@@ -38,8 +47,8 @@
         android:id="@+id/third"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="@dimen/list_padding"
         android:layout_marginEnd="@dimen/list_padding"
+        android:layout_marginRight="@dimen/list_padding"
         android:singleLine="true"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="@dimen/small_text_size"

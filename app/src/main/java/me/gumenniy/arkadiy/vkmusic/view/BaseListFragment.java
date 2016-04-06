@@ -6,17 +6,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import java.util.List;
 
@@ -40,10 +37,10 @@ import me.gumenniy.arkadiy.vkmusic.utils.Paginator;
 public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extends Fragment
         implements BaseView<D>, Paginator.OnPaginateListener,
         SwipeRefreshLayout.OnRefreshListener,
-        AdapterView.OnItemClickListener,
+        AbstractListAdapter.OnItemClickListener,
         OnBackPressListener {
 
-    @Bind(R.id.list) ListView listView;
+    @Bind(R.id.list) RecyclerView recyclerView;
     @Bind(R.id.progress_bar) ProgressBar progressBar;
     @Bind(R.id.bottom_progress_bar) View bottomProgressBar;
     @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeLayout;
@@ -62,6 +59,9 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
 
     protected abstract void inject(RestComponent component);
 
+    public RecyclerView getListView() {
+        return recyclerView;
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -97,12 +97,15 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     private void initViews() {
-        listView.setOnItemClickListener(this);
+//        recyclerView.setOnItemClickListener(this);
+        LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(manager);
         adapter = getListAdapter();
-        listView.setAdapter(adapter);
+        adapter.setListener(this);
+        recyclerView.setAdapter(adapter);
         Paginator paginator = new Paginator();
         paginator.setOnPaginateListener(this);
-        paginator.paginateListView(listView);
+        paginator.paginateListView(recyclerView);
         swipeLayout.setOnRefreshListener(this);
     }
 
@@ -123,7 +126,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     @Override
     public void showProgress(int state) {
         setVisibility(emptyView, false);
-        setVisibility(listView, state == BaseListPresenter.STATE_PAGINATE);
+        setVisibility(recyclerView, state == BaseListPresenter.STATE_PAGINATE);
         setVisibility(progressBar, state == BaseListPresenter.STATE_FIRST_LOAD);
         setVisibility(bottomProgressBar, state == BaseListPresenter.STATE_PAGINATE);
         setRefreshing(state == BaseListPresenter.STATE_REFRESH);
@@ -131,8 +134,8 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
 
     @Override
     public void hideProgress() {
-        setVisibility(listView, true);
-        setVisibility(emptyView, listView.getAdapter().getCount() == 0);
+        setVisibility(recyclerView, true);
+        setVisibility(emptyView, recyclerView.getAdapter().getItemCount() == 0);
         setVisibility(progressBar, false);
         setVisibility(bottomProgressBar, false);
         setRefreshing(false);
@@ -179,7 +182,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(int position) {
         presenter.handleClick(position);
     }
 

@@ -4,34 +4,34 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
+import me.gumenniy.arkadiy.vkmusic.model.Album;
+import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.LastFMApi;
+import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import retrofit.Call;
+import retrofit.Response;
 
 /**
  * Created by Arkadiy on 18.03.2016.
@@ -44,16 +44,23 @@ public class MusicService extends Service implements Player,
 
 
     private static final int BUFFER_LOOP_MAX_COUNT = 35;
+    public static final String NONE = "none";
     private final IBinder musicBind = new MusicBinder();
     @Inject
     EventBus eventBus;
-    boolean firstTime = true;
+    @Inject
+    LastFMApi artworkApi;
+
+    //error calculating
     private int bufferLoopedCount;
     private int prevPercent;
+
+    //music execution
     private MediaPlayer player;
     @NotNull
     private List<Song> queue;
-    private int currentPosition;
+    private Map<String, String> images;
+    private int currentQueuePosition;
     private boolean isPrepared;
     @Nullable
     private PlayerListener playerListener;
@@ -66,6 +73,7 @@ public class MusicService extends Service implements Player,
         (MusicApplication.getApp(this)).getComponent().inject(this);
         eventBus.register(this);
         setQueue(new ArrayList<Song>());
+        images = new HashMap<>();
         initMediaPlayer();
     }
 
@@ -74,6 +82,121 @@ public class MusicService extends Service implements Player,
         super.onDestroy();
         eventBus.unregister(this);
         releasePlayer();
+    }
+
+    public void playSongByPosition(int position) {
+        setQueuePosition(position);
+        setShouldStart(true);
+        resetPlayer(true);
+    }
+
+    @Subscribe
+    public void onPlayQueueEvent(PlayQueueEvent event) {
+        setQueue(event.queue);
+        setShouldStart(true);
+        setQueuePosition(event.position);
+        if (playerListener != null) {
+            playerListener.onQueueChanged(getQueue());
+        }
+
+        resetPlayer(true);
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        isPrepared = true;
+        seekTo(savedPosition);
+        if (isShouldStart()) {
+            start();
+        }
+
+    }
+
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        next();
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        if (playerListener != null) {
+            playerListener.onError(getCurrentSong());
+        }
+        resetPlayer(true);
+        return false;
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+//        Log.e("MusicService", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
+        if (!isPrepared() && (prevPercent == percent && percent != 100)) {
+            bufferLoopedCount++;
+            if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
+                resetPlayer(false);
+                return;
+            }
+        } else {
+            resetBufferCount();
+        }
+        prevPercent = percent;
+
+        if (playerListener != null) {
+            playerListener.onSongBuffering(percent, player.getCurrentPosition());
+        }
+    }
+
+    public void playSong() {
+        Log.e("debug", "playSong()");
+        isPrepared = false;
+        resetBufferCount();
+        final Song playSong = getCurrentSong();
+        if (playSong != null) {
+            try {
+                player.setDataSource(playSong.getUrl());
+                player.prepareAsync();
+            } catch (Exception e) {
+                Log.e("MusicService", String.valueOf(e));
+            }
+            notifyBeginPreparing();
+        }
+        Log.e("debug", "playSong() end");
+    }
+
+    private void notifyBeginPreparing() {
+        if (playerListener != null) {
+            playerListener.onBeginPreparingSong(getCurrentQueuePosition(), getCurrentSong());
+        }
+    }
+
+    @Override
+    public String loadImageUrl(Song song) {
+        String url = getImageUrl(song);
+        if (url == null) {
+            new UrlLoader(song).execute();
+            return null;
+        } else if (!url.equals(NONE)) {
+            return url;
+        }
+        return null;
+    }
+
+    private void notifyImageLoaded(Song song, String url) {
+        if (playerListener != null) {
+            playerListener.onImageLoaded(song, url);
+        }
+    }
+
+    private void resetPlayer(boolean resetPosition) {
+        Log.e("debug", "resetPlayer()");
+        if (isPrepared() && !resetPosition) {
+            savedPosition = getCurrentSongPosition();
+        } else {
+            savedPosition = 0;
+        }
+        player.reset();
+        playSong();
+        Log.e("debug", "resetPlayer() end");
     }
 
     private void initMediaPlayer() {
@@ -94,17 +217,142 @@ public class MusicService extends Service implements Player,
         player = null;
     }
 
-    @Subscribe
-    public void onPlayQueueEvent(PlayQueueEvent event) {
-        setShouldStart(true);
-        setQueue(event.queue);
-        setPosition(event.position);
-        if (playerListener != null) {
-            playerListener.onQueueChanged(getQueue(), getCurrentPosition());
-        }
+    @Override
+    public void start() {
+        if (isPrepared()) {
+            setShouldStart(true);
 
-//        resetPlayer(true);
-//        new AsyncTask<Song, Void, Void>() {
+            player.start();
+            if (playerListener != null) {
+                playerListener.onSongStarted();
+            }
+        }
+    }
+
+    @Override
+    public void pause() {
+        if (isPrepared()) {
+            setShouldStart(false);
+
+            player.pause();
+            if (playerListener != null) {
+                playerListener.onSongPaused();
+            }
+        }
+    }
+
+    @Override
+    public void next() {
+        if (!isQueueEmpty()) {
+            currentQueuePosition = (++currentQueuePosition) % getQueue().size();
+
+            resetPlayer(true);
+        }
+    }
+
+    @Override
+    public void prev() {
+        if (!isQueueEmpty()) {
+            currentQueuePosition = (--currentQueuePosition + getQueue().size()) % getQueue().size();
+
+            resetPlayer(true);
+        }
+    }
+
+    @Override
+    public void setPlayerListener(@Nullable PlayerListener listener) {
+        playerListener = listener;
+    }
+
+    @Override
+    public boolean isPrepared() {
+        return isPrepared;
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return player.isPlaying();
+    }
+
+    @Override
+    public void seekTo(int position) {
+        if (isPrepared()) {
+            player.seekTo(position);
+        }
+    }
+
+    private int getCurrentSongPosition() {
+        return player.getCurrentPosition();
+    }
+
+    private void resetBufferCount() {
+        bufferLoopedCount = 0;
+    }
+
+    @Override
+    @Nullable
+    public Song getCurrentSong() {
+        try {
+            return queue.get(currentQueuePosition);
+        } catch (IndexOutOfBoundsException e) {
+            return null;
+        }
+    }
+
+    @NotNull
+    @Override
+    public List<Song> getQueue() {
+        return queue;
+    }
+
+    public void setQueue(@NotNull List<Song> queue) {
+        this.queue = queue;
+    }
+
+    @Override
+    public boolean isQueueEmpty() {
+        return queue.isEmpty();
+    }
+
+    public void setQueuePosition(int position) {
+        this.currentQueuePosition = position;
+    }
+
+    @Override
+    public int getCurrentQueuePosition() {
+        return currentQueuePosition;
+    }
+
+    public boolean isShouldStart() {
+        return shouldStart;
+    }
+
+    public void setShouldStart(boolean shouldStart) {
+        this.shouldStart = shouldStart;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return musicBind;
+    }
+
+    @Nullable
+    private String getImageUrl(Song song) {
+        return images.get(song.getKey());
+    }
+
+    private void putImageUri(@NotNull Song song, @NotNull String url) {
+        images.put(song.getKey(), url);
+    }
+
+    public class MusicBinder extends Binder {
+        public MusicService getService() {
+            return MusicService.this;
+        }
+    }
+
+//            new AsyncTask<Song, Void, Void>() {
 //            @Override
 //            protected Void doInBackground(Song... params) {
 //                try {
@@ -138,218 +386,55 @@ public class MusicService extends Service implements Player,
 //                return null;
 //            }
 //        }.execute(getCurrentSong());
-    }
+    class UrlLoader extends AsyncTask<Void, Void, String> {
+        private final Song song;
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return musicBind;
-    }
-
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        isPrepared = true;
-        seekTo(savedPosition);
-        if (isShouldStart()) {
-            start();
+        public UrlLoader(Song song) {
+            this.song = song;
         }
 
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        next();
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        if (playerListener != null) {
-            playerListener.onError(getCurrentSong());
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isPrepared() {
-        return isPrepared;
-    }
-
-    @Override
-    public boolean isPlaying() {
-        return player.isPlaying();
-    }
-
-    @Override
-    public void start() {
-        if (isPrepared()) {
-            setShouldStart(true);
-
-            player.start();
-            if (playerListener != null) {
-                playerListener.onSongStarted();
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+//                Call<Album> call = artworkApi.getAlbum(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
+//
+//                Response<Album> response = call.execute();
+//                if (response.isSuccess()) {
+//                    Album body = response.body();
+//                    String title = body.getTitle();
+//                    if (!TextUtils.isEmpty(title)) {
+//                        Call<Artwork> artworkCall = artworkApi.getArtwork(Settings.LAST_FM_API_KEY, song.getArtist(), title);
+//                        Response<Artwork> artworkResponse = artworkCall.execute();
+//                        if (artworkResponse.isSuccess()) {
+//                            Artwork artwork = artworkResponse.body();
+//                            return artwork.getUri();
+//                        }
+//                    }
+//                }
+                Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
+                Response<Artwork> artworkResponse = artworkCall.execute();
+                if (artworkResponse.isSuccess()) {
+                    Artwork artwork = artworkResponse.body();
+                    return artwork.getUri();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-    }
-
-    @Override
-    public void pause() {
-        if (isPrepared()) {
-            setShouldStart(false);
-
-            player.pause();
-            if (playerListener != null) {
-                playerListener.onSongPaused();
-            }
-        }
-    }
-
-    @Override
-    public void next() {
-        if (!isQueueEmpty()) {
-            currentPosition = (++currentPosition) % getQueue().size();
-
-            resetPlayer(true);
-        }
-    }
-
-    @Override
-    public void prev() {
-        if (!isQueueEmpty()) {
-            currentPosition = (--currentPosition + getQueue().size()) % getQueue().size();
-
-            resetPlayer(true);
-        }
-    }
-
-    @Override
-    public void setPlayerListener(@Nullable PlayerListener listener) {
-        playerListener = listener;
-    }
-
-    @Override
-    public void seekTo(int position) {
-        if (isPrepared()) {
-            player.seekTo(position);
-        }
-    }
-
-    public void setPosition(int position) {
-        this.currentPosition = position;
-    }
-
-    @Override
-    public boolean isQueueEmpty() {
-        return queue.isEmpty();
-    }
-
-    @Override
-    @Nullable
-    public Song getCurrentSong() {
-        try {
-            return queue.get(currentPosition);
-        } catch (IndexOutOfBoundsException e) {
             return null;
         }
-    }
 
-    @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Log.e("MusicService", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
-        if ((prevPercent == percent && percent != 100)) {
-            bufferLoopedCount++;
-            if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
-                resetPlayer(false);
-                return;
+
+        @Override
+        protected void onPostExecute(String s) {
+            if (!TextUtils.isEmpty(s)) {
+                putImageUri(song, s);
+//                Song currentSong = getCurrentSong();
+//                if (currentSong != null && song.getKey().equals(currentSong.getKey())) {
+                    notifyImageLoaded(song, s);
+//                }
+            } else {
+                putImageUri(song, NONE);
             }
-        } else {
-            resetBufferCount();
-        }
-        prevPercent = percent;
-
-        if (playerListener != null) {
-            playerListener.onSongBuffering(percent, player.getCurrentPosition());
-        }
-    }
-
-    public void playSong() {
-        Log.e("debug", "playSong()");
-        isPrepared = false;
-        resetBufferCount();
-        final Song playSong = getCurrentSong();
-        if (playSong != null) {
-            try {
-                player.setDataSource(playSong.getUrl());
-                player.prepareAsync();
-            } catch (Exception e) {
-                Log.e("MusicService", String.valueOf(e));
-            }
-            if (playerListener != null) {
-                playerListener.onBeginPreparingSong(getCurrentSong());
-            }
-        }
-        Log.e("debug", "playSong() end");
-    }
-
-    private void resetPlayer(boolean resetPosition) {
-        Log.e("debug", "resetPlayer()");
-        if (isPrepared() && !resetPosition) {
-            savedPosition = getCurrentPosition();
-        } else {
-            savedPosition = 0;
-        }
-//        if (firstTime || isPrepared()) {
-        player.reset();
-//            firstTime = false;
-//        } else {
-//            actionCancel();
-//        }
-        playSong();
-        Log.e("debug", "resetPlayer() end");
-    }
-
-    private void actionCancel() {
-        Log.e("debug", "actionCancel()");
-        try {
-            player.setDataSource("");
-//            player.stop();
-        } catch (Exception e) {
-            Log.e("debug", "actionCancel(): mp.stop() exception");
-            player.reset();
-        }
-        Log.e("debug", "actionCancel() end");
-
-    }
-
-    private void resetBufferCount() {
-        bufferLoopedCount = 0;
-    }
-
-    @NotNull
-    @Override
-    public List<Song> getQueue() {
-        return queue;
-    }
-
-    public void setQueue(@NotNull List<Song> queue) {
-        this.queue = queue;
-    }
-
-    public int getCurrentPosition() {
-        return currentPosition;
-    }
-
-    public boolean isShouldStart() {
-        return shouldStart;
-    }
-
-    public void setShouldStart(boolean shouldStart) {
-        this.shouldStart = shouldStart;
-    }
-
-    public class MusicBinder extends Binder {
-        public MusicService getService() {
-            return MusicService.this;
         }
     }
 }

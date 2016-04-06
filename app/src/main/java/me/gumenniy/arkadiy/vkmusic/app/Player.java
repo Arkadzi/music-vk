@@ -14,6 +14,7 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
  */
 public interface Player {
     List<Song> getQueue();
+    int getCurrentQueuePosition();
     boolean isQueueEmpty();
     boolean isPrepared();
     boolean isPlaying();
@@ -24,13 +25,15 @@ public interface Player {
     void setPlayerListener(PlayerListener listener);
     void seekTo(int position);
     Song getCurrentSong();
+    String loadImageUrl(Song song);
 
     interface PlayerListener {
-        void onBeginPreparingSong(Song song);
+        void onBeginPreparingSong(int position, Song song);
         void onSongStarted();
         void onSongPaused();
         void onError(Song song);
-        void onQueueChanged(@NotNull List<Song> queue, int position);
+        void onQueueChanged(@NotNull List<Song> queue);
         void onSongBuffering(int bufferedPercent, int progress);
+        void onImageLoaded(Song song, String url);
     }
 }

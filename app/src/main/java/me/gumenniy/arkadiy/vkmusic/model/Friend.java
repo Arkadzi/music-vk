@@ -11,7 +11,7 @@ public class Friend {
     private String firstName;
     @SerializedName("last_name")
     private String lastName;
-    @SerializedName("photo_50")
+    @SerializedName("photo_100")
     private String photo;
     @SerializedName("can_see_audio")
     private int isAudioAvailable;

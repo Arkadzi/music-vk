@@ -21,7 +21,12 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
-import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.VKResponseTypeAdapter;
+import me.gumenniy.arkadiy.vkmusic.model.Album;
+import me.gumenniy.arkadiy.vkmusic.model.Artwork;
+import me.gumenniy.arkadiy.vkmusic.rest.LastFMApi;
+import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.AlbumAdapter;
+import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.ArtworkAdapter;
+import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.VKResultTypeAdapter;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
@@ -64,7 +69,9 @@ public class RestClientModule {
     @Singleton
     public Retrofit provideRetrofit(OkHttpClient okClient) {
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(VKResult.class, new VKResponseTypeAdapter())
+                .registerTypeAdapter(VKResult.class, new VKResultTypeAdapter())
+                .registerTypeAdapter(Album.class, new AlbumAdapter())
+                .registerTypeAdapter(Artwork.class, new ArtworkAdapter())
                 .create();
 
         return new Retrofit.Builder()
@@ -79,6 +86,14 @@ public class RestClientModule {
     public VkApi provideVkApi(Retrofit retrofit) {
         return retrofit.create(VkApi.class);
     }
+
+
+    @Provides
+    @Singleton
+    public LastFMApi provideLastFMApi(Retrofit retrofit) {
+        return retrofit.create(LastFMApi.class);
+    }
+
 
     @Provides
     @Singleton

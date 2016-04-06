@@ -22,7 +22,7 @@ import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 /**
  * Created by Arkadiy on 01.04.2016.
  */
-public class VKResponseTypeAdapter<T> implements JsonDeserializer<VKResult<T>> {
+public class VKResultTypeAdapter<T> implements JsonDeserializer<VKResult<T>> {
     private Gson gson = new GsonBuilder().create();
 
     @Override

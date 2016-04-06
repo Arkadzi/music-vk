@@ -12,11 +12,11 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
 public interface PlaybackView {
     void setQueue(List<Song> queue);
 
-    void setPosition(int position);
-
-    void renderSong(@NotNull Song song);
+    void renderSong(int position, @NotNull Song song);
 
     void updatePlaybackButtonImage(boolean started);
 
     void setBufferProgress(int percent, int progress);
+
+    void renderImage(Song song, String url);
 }

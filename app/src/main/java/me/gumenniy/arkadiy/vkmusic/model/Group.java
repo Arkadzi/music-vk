@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 public class Group {
     private long id;
     private String name;
-    @SerializedName("photo_50")
+    @SerializedName("photo_100")
     private String photo;
     private boolean isAudioAvailable = true;
 

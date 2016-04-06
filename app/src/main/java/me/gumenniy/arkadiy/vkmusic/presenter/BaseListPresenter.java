@@ -146,7 +146,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
     public void paginate() {
-        if (count > data.size()) {
+        if (count > data.size() && state == STATE_IDLE) {
             loadData(STATE_PAGINATE);
         }
     }

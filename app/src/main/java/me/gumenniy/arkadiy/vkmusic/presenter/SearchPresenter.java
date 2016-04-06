@@ -1,6 +1,5 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
@@ -20,7 +19,7 @@ import retrofit.Call;
  * Created by Arkadiy on 30.03.2016.
  */
 @Singleton
-public class SearchPresenter extends BaseListPresenter<Song> implements OnSearchSubmitListener, MenuListener {
+public class SearchPresenter extends BaseListPresenter<Song> implements OnSearchSubmitListener {
     @NotNull
     private String query = "";
     private int onlyPerformer;
@@ -47,31 +46,39 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
     }
 
     @Override
-    public void onSearchSubmit(@NotNull String query) {
-        Log.e("Search", "submit " + query);
+    public void onSearchSubmit(@NotNull String query, boolean onlyPerformer) {
         this.query = query;
+        this.onlyPerformer = onlyPerformer ? 1 : 0;
+
         if (!query.isEmpty()) {
             reset();
             loadData(STATE_FIRST_LOAD);
         }
-
-    }
-
-    @Override
-    public void onCheckableMenuItemClicked(boolean checked) {
-        onlyPerformer = checked ? 1 : 0;
-        if (!query.isEmpty()) {
-            reset();
-            loadData(STATE_FIRST_LOAD);
-        }
-    }
-
-    @Override
-    public void onMenuItemClicked(int id) {
 
     }
 
     public boolean isOnlyPerformer() {
         return onlyPerformer == 1;
+    }
+
+    @Override
+    protected void loadData(int state) {
+        if (!query.isEmpty()) {
+            super.loadData(state);
+        }
+    }
+
+    @Override
+    public void refresh() {
+        if (!query.isEmpty()) {
+            super.refresh();
+        } else {
+            onLoadingStop();
+        }
+    }
+
+    @NotNull
+    public String getQuery() {
+        return query;
     }
 }

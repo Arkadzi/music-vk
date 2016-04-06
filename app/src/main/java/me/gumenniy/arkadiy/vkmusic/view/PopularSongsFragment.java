@@ -3,10 +3,7 @@ package me.gumenniy.arkadiy.vkmusic.view;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.view.menu.MenuBuilder;
-import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -19,7 +16,6 @@ import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PopularSongsPresenter;
-import me.gumenniy.arkadiy.vkmusic.presenter.SearchPresenter;
 
 /**
  * Created by Arkadiy on 30.03.2016.

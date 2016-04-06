@@ -49,11 +49,11 @@ public class SongListPresenter extends BaseListPresenter<Song> {
     @NotNull
     protected Call<VKResult<Song>> getApiCall(VkApi api, UserSession user) {
         String ownerId = (userId.equals(CURRENT_USER)) ? user.getClientId() : userId;
-        api.getRecommendedSongs(ownerId, getData().size(), 3, user.getToken());
+//        api.getRecommendedSongs(ownerId, getData().size(), 50, user.getToken());
         if (recommended) {
-            return api.getRecommendedSongs(ownerId, getData().size(), 3, user.getToken());
+            return api.getRecommendedSongs(ownerId, getData().size(), 50, user.getToken());
         } else {
-            return api.getSongs(ownerId, getData().size(), 3, user.getToken());
+            return api.getSongs(ownerId, getData().size(), 50, user.getToken());
         }
     }
 

@@ -5,13 +5,18 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
 import me.gumenniy.arkadiy.vkmusic.R;
+import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
@@ -21,7 +26,7 @@ import me.gumenniy.arkadiy.vkmusic.presenter.SearchPresenter;
 /**
  * Created by Arkadiy on 30.03.2016.
  */
-public class SearchFragment extends BaseListFragment<Song, SearchPresenter> implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
+public class SearchFragment extends BaseListFragment<Song, SearchPresenter> implements SearchView.OnQueryTextListener {
 
     private SearchView searchView;
 
@@ -29,11 +34,12 @@ public class SearchFragment extends BaseListFragment<Song, SearchPresenter> impl
         SearchFragment fragment = new SearchFragment();
 
         Bundle args = new Bundle();
-        args.putString(TITLE,  title);
+        args.putString(TITLE, title);
         fragment.setArguments(args);
 
         return fragment;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,15 +48,39 @@ public class SearchFragment extends BaseListFragment<Song, SearchPresenter> impl
         setHasOptionsMenu(true);
     }
 
+
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.toolbar_menu, menu);
-        final MenuItem item = menu.findItem(R.id.action_search);
+        MenuItem item = menu.findItem(R.id.action_search);
         searchView = (SearchView) MenuItemCompat.getActionView(item);
-        searchView.setOnCloseListener(this);
-        searchView.setOnQueryTextListener(this);
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchView.setQuery(presenter.getQuery(),false);
+            }
+        });
+        MenuItemCompat.setOnActionExpandListener(item, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return !((MainActivity) getActivity()).handleBackPress();
+            }
+        });
+
         menu.findItem(R.id.action_performer).setChecked(presenter.isOnlyPerformer());
-        super.onCreateOptionsMenu(menu, inflater);
+        searchView.setOnQueryTextListener(SearchFragment.this);
+    }
+
+    public void clearFocus() {
+        if (searchView != null && searchView.hasFocus()) {
+            searchView.clearFocus();
+        }
     }
 
     @Override
@@ -58,9 +88,28 @@ public class SearchFragment extends BaseListFragment<Song, SearchPresenter> impl
         int id = item.getItemId();
         if (id == R.id.action_performer) {
             item.setChecked(!item.isChecked());
-            presenter.onCheckableMenuItemClicked(item.isChecked());
+            String query = searchView.getQuery().toString();
+            if (searchView.isIconified()) {
+                query = presenter.getQuery();
+            }
+            presenter.onSearchSubmit(query, item.isChecked());
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        presenter.onSearchSubmit(query, presenter.isOnlyPerformer());
+        return false;
+    }
+
+    @Override
+    public boolean backPressHandled() {
+        if (!searchView.isIconified()) {
+            searchView.setIconified(true);
+            return true;
+        }
+        return super.backPressHandled();
     }
 
     @Override
@@ -74,32 +123,7 @@ public class SearchFragment extends BaseListFragment<Song, SearchPresenter> impl
     }
 
     @Override
-    public boolean onQueryTextSubmit(String query) {
-        presenter.onSearchSubmit(query);
-        return false;
-    }
-
-    @Override
     public boolean onQueryTextChange(String newText) {
-        Log.e("search fragment", "new text " + newText);
-        if (newText.isEmpty()) {
-            presenter.onSearchSubmit(newText);
-        }
         return false;
-    }
-
-    @Override
-    public boolean onClose() {
-        Log.e("SearchFragment", "onClose()");
-        return false;
-    }
-
-    @Override
-    public boolean backPressHandled() {
-        if (!searchView.isIconified()) {
-            searchView.setIconified(true);
-            return true;
-        }
-        return super.backPressHandled();
     }
 }

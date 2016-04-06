@@ -48,4 +48,8 @@ public class Song {
     public String toString() {
         return getTitle();
     }
+
+    public String getKey() {
+        return String.format("%s%s", getTitle().toLowerCase(),getArtist().toLowerCase());
+    }
 }

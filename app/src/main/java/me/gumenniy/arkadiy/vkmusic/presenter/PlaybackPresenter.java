@@ -1,7 +1,6 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +28,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
 
     @Inject
     public PlaybackPresenter() {
+
     }
 
     public void handleClick(final int type) {
@@ -68,22 +68,23 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
             if (this.player != null) {
                 this.player.setPlayerListener(null);
             }
+            this.player = null;
         } else {
+            this.player = player;
             player.setPlayerListener(this);
             Song song = player.getCurrentSong();
             if (song != null && view != null) {
-                view.renderSong(song);
+                view.setQueue(player.getQueue());
+                view.renderSong(player.getCurrentQueuePosition(), song);
                 view.updatePlaybackButtonImage(player.isPrepared() && player.isPlaying());
             }
         }
-
-        this.player = player;
     }
 
     @Override
-    public void onBeginPreparingSong(Song song) {
+    public void onBeginPreparingSong(int position, Song song) {
         if (view != null) {
-            view.renderSong(song);
+            view.renderSong(position, song);
         }
     }
 
@@ -107,10 +108,10 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     }
 
     @Override
-    public void onQueueChanged(@NotNull List<Song> queue, int position) {
+    public void onQueueChanged(@NotNull List<Song> queue) {
         if (view != null) {
             view.setQueue(queue);
-            view.setPosition(position);
+//            view.setPosition(position);
         }
     }
 
@@ -121,9 +122,24 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
         }
     }
 
+    @Override
+    public void onImageLoaded(Song song, String url) {
+        if (view != null) {
+            view.renderImage(song, url);
+        }
+    }
+
     public void onProgressChanged(int progress) {
         if (player != null) {
             player.seekTo(progress * 1000);
         }
+    }
+
+    @Nullable
+    public String askUrl(Song item) {
+        if (player != null) {
+            return player.loadImageUrl(item);
+        }
+        return null;
     }
 }
