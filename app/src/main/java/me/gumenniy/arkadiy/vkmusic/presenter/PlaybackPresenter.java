@@ -53,6 +53,12 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
         }
     }
 
+    public void onPageSelected(int position) {
+        if (player != null) {
+            player.playSong(position);
+        }
+    }
+
     @Override
     public void bindView(@Nullable PlaybackView view) {
         this.view = view;

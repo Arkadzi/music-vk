@@ -6,6 +6,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
@@ -16,7 +17,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +24,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
@@ -43,8 +42,10 @@ public class MusicService extends Service implements Player,
         MediaPlayer.OnBufferingUpdateListener {
 
 
-    private static final int BUFFER_LOOP_MAX_COUNT = 35;
     public static final String NONE = "none";
+    private static final int BUFFER_LOOP_MAX_COUNT = 35;
+    private static final int RESET = 1;
+    private static final int LOAD = 2;
     private final IBinder musicBind = new MusicBinder();
     @Inject
     EventBus eventBus;
@@ -66,12 +67,15 @@ public class MusicService extends Service implements Player,
     private PlayerListener playerListener;
     private boolean shouldStart;
     private int savedPosition;
+    private PlayerExecutor playerExecutor;
+    private Handler handler;
 
     @Override
     public void onCreate() {
         super.onCreate();
         (MusicApplication.getApp(this)).getComponent().inject(this);
         eventBus.register(this);
+        preparePlayerExecutor();
         setQueue(new ArrayList<Song>());
         images = new HashMap<>();
         initMediaPlayer();
@@ -79,15 +83,10 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         eventBus.unregister(this);
+        quitPlayerExecutor();
         releasePlayer();
-    }
-
-    public void playSongByPosition(int position) {
-        setQueuePosition(position);
-        setShouldStart(true);
-        resetPlayer(true);
+        super.onDestroy();
     }
 
     @Subscribe
@@ -109,14 +108,13 @@ public class MusicService extends Service implements Player,
         if (isShouldStart()) {
             start();
         }
-
     }
-
 
     @Override
     public void onCompletion(MediaPlayer mp) {
         next();
     }
+
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -147,20 +145,27 @@ public class MusicService extends Service implements Player,
     }
 
     public void playSong() {
-        Log.e("debug", "playSong()");
         isPrepared = false;
         resetBufferCount();
         final Song playSong = getCurrentSong();
         if (playSong != null) {
-            try {
-                player.setDataSource(playSong.getUrl());
-                player.prepareAsync();
-            } catch (Exception e) {
-                Log.e("MusicService", String.valueOf(e));
-            }
+            Log.e("handler", "_____BEGIN_____" + playSong.getTitle());
+            playerExecutor.postTask(RESET, new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.e("handler", "_____RESET_____" + playSong.getTitle());
+                        player.reset();
+                        player.setDataSource(playSong.getUrl());
+                        player.prepareAsync();
+                        Log.e("handler", "_____PREPARING_____" + playSong.getTitle());
+                    } catch (Exception e) {
+                        Log.e("handler", "exception " + String.valueOf(e));
+                    }
+                }
+            }, true, true);
             notifyBeginPreparing();
         }
-        Log.e("debug", "playSong() end");
     }
 
     private void notifyBeginPreparing() {
@@ -172,13 +177,49 @@ public class MusicService extends Service implements Player,
     @Override
     public String loadImageUrl(Song song) {
         String url = getImageUrl(song);
+        Log.e("handler", song.getTitle() + "_________________" + url);
         if (url == null) {
-            new UrlLoader(song).execute();
+            loadImageUrlAsync(song);
+//            new UrlLoader(song).execute();
             return null;
         } else if (!url.equals(NONE)) {
             return url;
         }
         return null;
+    }
+
+    private void loadImageUrlAsync(final Song song) {
+        playerExecutor.postTask(LOAD, new Runnable() {
+            String url;
+
+            @Override
+            public void run() {
+                try {
+                    Log.e("handler", "_________BEGIN " + song.getTitle());
+                    Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
+                    Response<Artwork> artworkResponse = artworkCall.execute();
+                    Log.e("handler", "_________END " + song.getTitle());
+                    if (artworkResponse.isSuccess()) {
+                        Artwork artwork = artworkResponse.body();
+                        url = artwork.getUri();
+                    }
+                } catch (Exception e) {
+
+                }
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.e("handler", song.getTitle() + "_____LOADED______" + url);
+                        if (!TextUtils.isEmpty(url)) {
+                            putImageUri(song, url);
+                            notifyImageLoaded(song, url);
+                        } else {
+                            putImageUri(song, NONE);
+                        }
+                    }
+                });
+            }
+        }, false, false);
     }
 
     private void notifyImageLoaded(Song song, String url) {
@@ -194,10 +235,10 @@ public class MusicService extends Service implements Player,
         } else {
             savedPosition = 0;
         }
-        player.reset();
         playSong();
         Log.e("debug", "resetPlayer() end");
     }
+
 
     private void initMediaPlayer() {
         player = new MediaPlayer();
@@ -215,6 +256,17 @@ public class MusicService extends Service implements Player,
         player.reset();
         player.release();
         player = null;
+    }
+
+    private void preparePlayerExecutor() {
+        handler = new Handler();
+        playerExecutor = new PlayerExecutor();
+        playerExecutor.start();
+        playerExecutor.prepareHandler();
+    }
+
+    private void quitPlayerExecutor() {
+        playerExecutor.quit();
     }
 
     @Override
@@ -299,6 +351,12 @@ public class MusicService extends Service implements Player,
         }
     }
 
+    @Override
+    public void playSong(int position) {
+        setQueuePosition(position);
+        playSong();
+    }
+
     @NotNull
     @Override
     public List<Song> getQueue() {
@@ -352,7 +410,7 @@ public class MusicService extends Service implements Player,
         }
     }
 
-//            new AsyncTask<Song, Void, Void>() {
+    //            new AsyncTask<Song, Void, Void>() {
 //            @Override
 //            protected Void doInBackground(Song... params) {
 //                try {
@@ -391,6 +449,8 @@ public class MusicService extends Service implements Player,
 
         public UrlLoader(Song song) {
             this.song = song;
+
+
         }
 
         @Override
@@ -430,7 +490,7 @@ public class MusicService extends Service implements Player,
                 putImageUri(song, s);
 //                Song currentSong = getCurrentSong();
 //                if (currentSong != null && song.getKey().equals(currentSong.getKey())) {
-                    notifyImageLoaded(song, s);
+                notifyImageLoaded(song, s);
 //                }
             } else {
                 putImageUri(song, NONE);

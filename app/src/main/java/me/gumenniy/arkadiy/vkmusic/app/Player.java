@@ -25,6 +25,7 @@ public interface Player {
     void setPlayerListener(PlayerListener listener);
     void seekTo(int position);
     Song getCurrentSong();
+    void playSong(int position);
     String loadImageUrl(Song song);
 
     interface PlayerListener {

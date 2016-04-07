@@ -17,6 +17,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -37,6 +38,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.ArtworkAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.view.SimplePagerListener;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     private ArtworkAdapter adapter;
     @Nullable
     private Fragment fragment;
+    private boolean isUserInteraction;
     private ServiceConnection connection = new ServiceConnection() {
 
         @Override
@@ -116,6 +119,24 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     private void preparePager() {
         adapter = new ArtworkAdapter(this, presenter);
         pager.setAdapter(adapter);
+        pager.addOnPageChangeListener(new SimplePagerListener() {
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                Log.e("pager", "onPageStateChanged() " + state);
+                if (state == ViewPager.SCROLL_STATE_DRAGGING) {
+                    isUserInteraction = true;
+                }
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                Log.e("pager", "onPageSelected() " + position);
+                if (isUserInteraction) {
+                    presenter.onPageSelected(position);
+                    isUserInteraction = false;
+                }
+            }
+        });
     }
 
     @Override
@@ -138,7 +159,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
 
     private void initSeekBar() {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             }
@@ -166,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         super.onStop();
         unbindService(connection);
         presenter.setPlayer(null);
+//        isUserInteraction = false;
     }
 
     private void initSlidingPanel() {
@@ -176,7 +197,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         Intent intent = new Intent(this, MusicService.class);
         startService(intent);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -299,7 +319,10 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         songNameView.setText(song.getTitle());
         artistNameView.setText(song.getArtist());
         seekBar.setMax(song.getDuration());
-        pager.setCurrentItem(position);
+        if (position != pager.getCurrentItem()) {
+            isUserInteraction = false;
+            pager.setCurrentItem(position);
+        }
         setBufferProgress(0, 0);
         enableControlPanel();
     }
