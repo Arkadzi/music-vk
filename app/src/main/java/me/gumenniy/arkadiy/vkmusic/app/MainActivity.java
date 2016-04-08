@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         pager.addOnPageChangeListener(new SimplePagerListener() {
             @Override
             public void onPageScrollStateChanged(int state) {
-                Log.e("pager", "onPageStateChanged() " + state);
                 if (state == ViewPager.SCROLL_STATE_DRAGGING) {
                     isUserInteraction = true;
                 }
@@ -130,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
 
             @Override
             public void onPageSelected(int position) {
-                Log.e("pager", "onPageSelected() " + position);
                 if (isUserInteraction) {
                     presenter.onPageSelected(position);
                     isUserInteraction = false;
@@ -186,7 +184,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         super.onStop();
         unbindService(connection);
         presenter.setPlayer(null);
-//        isUserInteraction = false;
     }
 
     private void initSlidingPanel() {

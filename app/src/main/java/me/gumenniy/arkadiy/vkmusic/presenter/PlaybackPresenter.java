@@ -110,7 +110,6 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
 
     @Override
     public void onError(Song song) {
-
     }
 
     @Override

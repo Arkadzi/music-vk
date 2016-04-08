@@ -112,17 +112,20 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        Log.e("player", "complete ");
         next();
     }
 
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        Log.e("player", "error " + what + " " + extra);
         if (playerListener != null) {
             playerListener.onError(getCurrentSong());
         }
+        if (!(what == 1 && extra == -1004))
         resetPlayer(true);
-        return false;
+        return true;
     }
 
     @Override
@@ -203,18 +206,22 @@ public class MusicService extends Service implements Player,
                         Artwork artwork = artworkResponse.body();
                         url = artwork.getUri();
                     }
+                } catch (NullPointerException npe) {
+                    url = "";
                 } catch (Exception e) {
-
+                    Log.e("exception", song.getTitle() + " " + String.valueOf(e));
                 }
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("handler", song.getTitle() + "_____LOADED______" + url);
-                        if (!TextUtils.isEmpty(url)) {
-                            putImageUri(song, url);
-                            notifyImageLoaded(song, url);
-                        } else {
-                            putImageUri(song, NONE);
+                        Log.e("handler", song.getTitle() + "_____LOADED " + url);
+                        if (url != null) {
+                            if (url.isEmpty()) {
+                                putImageUri(song, NONE);
+                            } else {
+                                putImageUri(song, url);
+                                notifyImageLoaded(song, url);
+                            }
                         }
                     }
                 });
@@ -444,57 +451,4 @@ public class MusicService extends Service implements Player,
 //                return null;
 //            }
 //        }.execute(getCurrentSong());
-    class UrlLoader extends AsyncTask<Void, Void, String> {
-        private final Song song;
-
-        public UrlLoader(Song song) {
-            this.song = song;
-
-
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-            try {
-//                Call<Album> call = artworkApi.getAlbum(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
-//
-//                Response<Album> response = call.execute();
-//                if (response.isSuccess()) {
-//                    Album body = response.body();
-//                    String title = body.getTitle();
-//                    if (!TextUtils.isEmpty(title)) {
-//                        Call<Artwork> artworkCall = artworkApi.getArtwork(Settings.LAST_FM_API_KEY, song.getArtist(), title);
-//                        Response<Artwork> artworkResponse = artworkCall.execute();
-//                        if (artworkResponse.isSuccess()) {
-//                            Artwork artwork = artworkResponse.body();
-//                            return artwork.getUri();
-//                        }
-//                    }
-//                }
-                Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
-                Response<Artwork> artworkResponse = artworkCall.execute();
-                if (artworkResponse.isSuccess()) {
-                    Artwork artwork = artworkResponse.body();
-                    return artwork.getUri();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-
-        @Override
-        protected void onPostExecute(String s) {
-            if (!TextUtils.isEmpty(s)) {
-                putImageUri(song, s);
-//                Song currentSong = getCurrentSong();
-//                if (currentSong != null && song.getKey().equals(currentSong.getKey())) {
-                notifyImageLoaded(song, s);
-//                }
-            } else {
-                putImageUri(song, NONE);
-            }
-        }
-    }
 }
