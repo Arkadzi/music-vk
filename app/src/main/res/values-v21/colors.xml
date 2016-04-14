@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorControlHighlight">#64000000</color>
+    <color name="notification_secondary">@color/colorControlNormal</color>
+    <color name="notification_main_text">@color/primaryText</color>
+
+</resources>

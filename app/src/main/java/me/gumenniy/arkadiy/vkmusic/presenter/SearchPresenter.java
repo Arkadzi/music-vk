@@ -1,9 +1,9 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
-import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,23 +20,23 @@ import retrofit.Call;
  */
 @Singleton
 public class SearchPresenter extends BaseListPresenter<Song> implements OnSearchSubmitListener {
-    @NotNull
+    @NonNull
     private String query = "";
     private int onlyPerformer;
 
     private final EventBus eventBus;
 
     @Inject
-    public SearchPresenter(@NotNull VkApi api, @NotNull UserSession user, @NotNull EventBus eventBus) {
+    public SearchPresenter(@NonNull VkApi api, @NonNull UserSession user, @NonNull EventBus eventBus) {
         super(api, user);
         this.eventBus = eventBus;
         state = STATE_IDLE;
     }
 
 
-    @NotNull
+    @NonNull
     @Override
-    protected Call<VKResult<Song>> getApiCall(VkApi api, UserSession user) {
+    protected Call<VKResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         return api.getSongsByQuery(query, onlyPerformer, getData().size(), 10, user.getToken());
     }
 
@@ -46,7 +46,7 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
     }
 
     @Override
-    public void onSearchSubmit(@NotNull String query, boolean onlyPerformer) {
+    public void onSearchSubmit(@NonNull String query, boolean onlyPerformer) {
         this.query = query;
         this.onlyPerformer = onlyPerformer ? 1 : 0;
 
@@ -77,7 +77,7 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
         }
     }
 
-    @NotNull
+    @NonNull
     public String getQuery() {
         return query;
     }

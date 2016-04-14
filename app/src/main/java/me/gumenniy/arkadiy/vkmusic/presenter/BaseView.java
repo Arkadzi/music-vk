@@ -1,5 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
+
 import java.util.List;
 
 /**
@@ -7,10 +9,10 @@ import java.util.List;
  */
 public interface BaseView<T> {
     void showProgress(int state);
-    void renderData(List<T> data);
+    void renderData(@NonNull List<T> data);
     void hideProgress();
-    void showError(String s);
+    void showError(@NonNull String s);
     void requestNewToken();
-    void navigateBy(T item);
+    void navigateBy(@NonNull T item);
     void dismiss();
 }

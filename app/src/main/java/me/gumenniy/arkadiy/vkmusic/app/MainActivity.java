@@ -6,6 +6,7 @@ import android.content.ServiceConnection;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -27,8 +28,6 @@ import android.widget.TextView;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 
 import javax.inject.Inject;
@@ -42,6 +41,7 @@ import me.gumenniy.arkadiy.vkmusic.app.view.SimplePagerListener;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
+import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.OnBackPressListener;
@@ -80,11 +80,14 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     @Nullable
     private Fragment fragment;
     private boolean isUserInteraction;
+    @Nullable
+    private MusicService service;
+
     private ServiceConnection connection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
-            Player service = ((MusicService.MusicBinder) binder).getService();
+            service = ((MusicService.MusicBinder) binder).getService();
             presenter.setPlayer(service);
 
         }
@@ -92,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         @Override
         public void onServiceDisconnected(ComponentName name) {
             presenter.setPlayer(null);
+            service = null;
         }
     };
 
@@ -108,13 +112,28 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         preparePager();
         initSeekBar();
         presenter.bindView(this);
-        startService();
+//        startService();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment == null) {
             startFragment(SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music), false));
             navigationView.setCheckedItem(R.id.my_music_item);
         }
     }
+
+//    private void check() {
+//        Log.e("aaaaaa",getCacheDir() + " " + getFilesDir());
+//        try {
+//
+//            File file = new File(getExternalCacheDir() + File.separator + "asd");
+//            FileOutputStream os = new FileOutputStream(file);
+//            String word = "word";
+//            for (char c : word.toCharArray())
+//            os.write(c);
+//            os.close();
+//        } catch (Exception e) {
+//            Log.e("exception", String.valueOf(e));
+//        }
+//    }
 
     private void preparePager() {
         adapter = new ArtworkAdapter(this, presenter);
@@ -172,26 +191,51 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         });
     }
 
+    private void initSlidingPanel() {
+        panel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, MusicService.class);
+        startService(Settings.Notification.ACTION.END_FOREGROUND_ACTION);
         bindService(intent, connection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (service != null) {
+            unbindService(false, service.isPrepared() || service.isShouldStart());
+            service = null;
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        if (service != null) {
+            Log.e("action", isFinishing() + " " + service.isPlaying());
+            unbindService(isFinishing() && !service.isPlaying(), isFinishing() && service.isPlaying());
+            service = null;
+        }
+    }
+
+
+    private void unbindService(boolean canStopService, boolean canBeginForeground) {
         unbindService(connection);
         presenter.setPlayer(null);
+        if (canBeginForeground) {
+            startService(Settings.Notification.ACTION.BEGIN_FOREGROUND_ACTION);
+        } else if (canStopService) {
+            startService(Settings.Notification.ACTION.STOP_SERVICE_ACTION);
+        }
     }
 
-    private void initSlidingPanel() {
-        panel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-    }
-
-    private void startService() {
+    private void startService(String action) {
         Intent intent = new Intent(this, MusicService.class);
+        intent.setAction(action);
         startService(intent);
     }
 
@@ -199,10 +243,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     protected void onDestroy() {
         super.onDestroy();
         presenter.bindView(null);
-        if (isFinishing()) {
-            Intent intent = new Intent(this, MusicService.class);
-            stopService(intent);
-        }
     }
 
     private void startFragment(Fragment fragment) {
@@ -264,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
             }
         };
 
-        drawerLayout.setDrawerListener(actionBarDrawerToggle);
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
         actionBarDrawerToggle.syncState();
     }
 
@@ -278,11 +318,9 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     public boolean handleBackPress() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
-
             return true;
         } else if (panel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
             panel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-
             return true;
         }
         return false;
@@ -301,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     @Override
-    public void setQueue(List<Song> queue) {
+    public void setQueue(@NonNull List<Song> queue) {
         adapter.setData(queue);
     }
 
@@ -312,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     @Override
-    public void renderSong(int position, @NotNull Song song) {
+    public void renderSong(int position, @NonNull Song song) {
         songNameView.setText(song.getTitle());
         artistNameView.setText(song.getArtist());
         seekBar.setMax(song.getDuration());
@@ -338,11 +376,18 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     @Override
-    public void renderImage(Song song, String url) {
-        View view = pager.findViewWithTag(song.getKey());
-        if (view != null) {
-            adapter.updateView(view, url);
+    public void renderImage(@NonNull Song song, @NonNull String url) {
+        for (int i = 0; i < pager.getChildCount(); i++) {
+            View child = pager.getChildAt(i);
+            String tag = (String) child.getTag();
+            if (song.getKey().equals(tag)) {
+                adapter.updateView(child, url);
+            }
         }
+//        View view = pager.findViewWithTag(song.getKey());
+//        if (view != null) {
+//            adapter.updateView(view, url);
+//        }
     }
 
     @OnClick(R.id.prev_button)

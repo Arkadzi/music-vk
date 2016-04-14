@@ -2,16 +2,20 @@ package me.gumenniy.arkadiy.vkmusic.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telephony.PhoneNumberUtils;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -40,16 +44,24 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         AbstractListAdapter.OnItemClickListener,
         OnBackPressListener {
 
-    @Bind(R.id.list) RecyclerView recyclerView;
-    @Bind(R.id.progress_bar) ProgressBar progressBar;
-    @Bind(R.id.bottom_progress_bar) View bottomProgressBar;
-    @Bind(R.id.swipe_refresh) SwipeRefreshLayout swipeLayout;
-    @Bind(R.id.empty_view) View emptyView;
-    @Inject P presenter;
-
     public static final String TITLE = "title";
+    @Bind(R.id.list)
+    RecyclerView recyclerView;
+    @Bind(R.id.progress_bar)
+    ProgressBar progressBar;
+    @Bind(R.id.bottom_progress_bar)
+    View bottomProgressBar;
+    @Bind(R.id.swipe_refresh)
+    SwipeRefreshLayout swipeLayout;
+    @Bind(R.id.empty_view)
+    View emptyView;
+    @Inject
+    P presenter;
     private AbstractListAdapter<D> adapter;
+    @Nullable
     private String title;
+    private boolean visible;
+    private float height;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,10 +70,6 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     protected abstract void inject(RestComponent component);
-
-    public RecyclerView getListView() {
-        return recyclerView;
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -72,11 +80,12 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         }
     }
 
+    @Nullable
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(@Nullable String title) {
         this.title = title;
     }
 
@@ -92,12 +101,22 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void navigateBy(D item) {
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+//        height = bottomProgressBar.getHeight();
+    }
+
+    @Override
+    public void navigateBy(@NonNull D item) {
 
     }
 
     private void initViews() {
-//        recyclerView.setOnItemClickListener(this);
+        float metrics = getResources().getDisplayMetrics().density;
+        float dimension = getResources().getDimension(R.dimen.bottom_progress_height);
+        height = dimension * metrics;
+
+        bottomProgressBar.setTranslationY(height);
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(manager);
         adapter = getListAdapter();
@@ -128,7 +147,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         setVisibility(emptyView, false);
         setVisibility(recyclerView, state == BaseListPresenter.STATE_PAGINATE);
         setVisibility(progressBar, state == BaseListPresenter.STATE_FIRST_LOAD);
-        setVisibility(bottomProgressBar, state == BaseListPresenter.STATE_PAGINATE);
+        animate(bottomProgressBar, state == BaseListPresenter.STATE_PAGINATE);
         setRefreshing(state == BaseListPresenter.STATE_REFRESH);
     }
 
@@ -137,8 +156,27 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         setVisibility(recyclerView, true);
         setVisibility(emptyView, recyclerView.getAdapter().getItemCount() == 0);
         setVisibility(progressBar, false);
-        setVisibility(bottomProgressBar, false);
+        animate(bottomProgressBar, false);
         setRefreshing(false);
+    }
+
+
+    private void animate(final View view, final boolean makeVisible) {
+        boolean animate = (visible && !makeVisible)
+                || (!visible && makeVisible);
+        visible = makeVisible;
+        if (animate) {
+            if (makeVisible) {
+                view.animate().cancel();
+                view.setTranslationY(height);
+                view.animate().translationY(0);
+            } else {
+                view.animate().cancel();
+                view.setTranslationY(0);
+                view.animate().translationY(height);
+            }
+            Log.e("view", view.getY() + " " + view.getTranslationY() + " " + view.getHeight());
+        }
     }
 
     private void setRefreshing(final boolean shouldRefresh) {
@@ -150,6 +188,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
                 }
             });
         }
+
     }
 
     @Override
@@ -158,7 +197,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void showError(String error) {
+    public void showError(@NonNull String error) {
         Integer errorId = Errors.get(error);
         if (errorId != null) {
             error = getString(errorId);
@@ -167,7 +206,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void renderData(List<D> data) {
+    public void renderData(@NonNull List<D> data) {
         adapter.setData(data);
     }
 

@@ -1,6 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.view;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
 import java.util.ArrayList;
@@ -38,13 +39,14 @@ public class FriendListFragment extends BaseListFragment<Friend, FriendListPrese
         component.inject(this);
     }
 
+    @NonNull
     @Override
     protected AbstractListAdapter<Friend> getListAdapter() {
         return new FriendAdapter(getActivity(), new ArrayList<Friend>());
     }
 
     @Override
-    public void navigateBy(Friend item) {
+    public void navigateBy(@NonNull Friend item) {
         String userId = String.valueOf(item.getId());
         String title = String.format("%s %s", item.getFirstName(), item.getLastName());
 

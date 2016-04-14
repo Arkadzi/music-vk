@@ -4,18 +4,19 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
+import android.telecom.Connection;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +25,9 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import me.gumenniy.arkadiy.vkmusic.app.async.PlayerExecutor;
+import me.gumenniy.arkadiy.vkmusic.app.audio.ForegroundManager;
+import me.gumenniy.arkadiy.vkmusic.app.audio.Player;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
@@ -43,7 +47,7 @@ public class MusicService extends Service implements Player,
 
 
     public static final String NONE = "none";
-    private static final int BUFFER_LOOP_MAX_COUNT = 35;
+    private static final int BUFFER_LOOP_MAX_COUNT = 100;
     private static final int RESET = 1;
     private static final int LOAD = 2;
     private final IBinder musicBind = new MusicBinder();
@@ -58,17 +62,18 @@ public class MusicService extends Service implements Player,
 
     //music execution
     private MediaPlayer player;
-    @NotNull
+    @NonNull
     private List<Song> queue;
     private Map<String, String> images;
     private int currentQueuePosition;
-    private boolean isPrepared;
     @Nullable
     private PlayerListener playerListener;
+    private boolean isPrepared;
     private boolean shouldStart;
     private int savedPosition;
     private PlayerExecutor playerExecutor;
     private Handler handler;
+    private ForegroundManager foregroundManager;
 
     @Override
     public void onCreate() {
@@ -78,6 +83,7 @@ public class MusicService extends Service implements Player,
         preparePlayerExecutor();
         setQueue(new ArrayList<Song>());
         images = new HashMap<>();
+        foregroundManager = new ForegroundManager(this, images);
         initMediaPlayer();
     }
 
@@ -97,6 +103,7 @@ public class MusicService extends Service implements Player,
         if (playerListener != null) {
             playerListener.onQueueChanged(getQueue());
         }
+//        new AsyncDownloader(getCurrentSong().getUrl()).execute();
 
         resetPlayer(true);
     }
@@ -121,16 +128,18 @@ public class MusicService extends Service implements Player,
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.e("player", "error " + what + " " + extra);
         if (playerListener != null) {
-            playerListener.onError(getCurrentSong());
+            Song currentSong = getCurrentSong();
+            if (currentSong != null)
+                playerListener.onError(currentSong);
         }
         if (!(what == 1 && extra == -1004))
-        resetPlayer(true);
+            resetPlayer(true);
         return true;
     }
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-//        Log.e("MusicService", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
+        Log.e("play", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
         if (!isPrepared() && (prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
@@ -149,21 +158,22 @@ public class MusicService extends Service implements Player,
 
     public void playSong() {
         isPrepared = false;
+
         resetBufferCount();
         final Song playSong = getCurrentSong();
         if (playSong != null) {
-            Log.e("handler", "_____BEGIN_____" + playSong.getTitle());
+            Log.e("play", "_____BEGIN_____" + playSong.getTitle());
             playerExecutor.postTask(RESET, new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        Log.e("handler", "_____RESET_____" + playSong.getTitle());
+                        Log.e("play", "_____RESET_____" + playSong.getTitle());
                         player.reset();
                         player.setDataSource(playSong.getUrl());
                         player.prepareAsync();
-                        Log.e("handler", "_____PREPARING_____" + playSong.getTitle());
+                        Log.e("play", "_____PREPARING_____" + playSong.getTitle());
                     } catch (Exception e) {
-                        Log.e("handler", "exception " + String.valueOf(e));
+                        Log.e("play", "exception " + String.valueOf(e));
                     }
                 }
             }, true, true);
@@ -172,18 +182,22 @@ public class MusicService extends Service implements Player,
     }
 
     private void notifyBeginPreparing() {
-        if (playerListener != null) {
-            playerListener.onBeginPreparingSong(getCurrentQueuePosition(), getCurrentSong());
+        Song currentSong = getCurrentSong();
+        if (currentSong != null) {
+            if (playerListener != null) {
+                playerListener.onBeginPreparingSong(getCurrentQueuePosition(), currentSong, isShouldStart());
+            }
+            foregroundManager.updateRemoteView(currentSong, isShouldStart());
         }
     }
 
+    @Nullable
     @Override
-    public String loadImageUrl(Song song) {
+    public String loadImageUrl(@NonNull Song song) {
         String url = getImageUrl(song);
         Log.e("handler", song.getTitle() + "_________________" + url);
         if (url == null) {
             loadImageUrlAsync(song);
-//            new UrlLoader(song).execute();
             return null;
         } else if (!url.equals(NONE)) {
             return url;
@@ -246,7 +260,6 @@ public class MusicService extends Service implements Player,
         Log.e("debug", "resetPlayer() end");
     }
 
-
     private void initMediaPlayer() {
         player = new MediaPlayer();
         player.setWakeMode(getApplicationContext(),
@@ -278,26 +291,32 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void start() {
+        setShouldStart(true);
         if (isPrepared()) {
-            setShouldStart(true);
-
             player.start();
-            if (playerListener != null) {
-                playerListener.onSongStarted();
-            }
         }
+        if (playerListener != null) {
+            playerListener.onSongStarted();
+        }
+
+        Song currentSong = getCurrentSong();
+        if (currentSong != null)
+            foregroundManager.updateRemoteView(currentSong, true);
     }
 
     @Override
     public void pause() {
+        setShouldStart(false);
         if (isPrepared()) {
-            setShouldStart(false);
-
             player.pause();
-            if (playerListener != null) {
-                playerListener.onSongPaused();
-            }
         }
+        if (playerListener != null) {
+            playerListener.onSongPaused();
+        }
+
+        Song currentSong = getCurrentSong();
+        if (currentSong != null)
+            foregroundManager.updateRemoteView(currentSong, false);
     }
 
     @Override
@@ -330,7 +349,7 @@ public class MusicService extends Service implements Player,
 
     @Override
     public boolean isPlaying() {
-        return player.isPlaying();
+        return isPrepared() ? player.isPlaying() : isShouldStart();
     }
 
     @Override
@@ -348,8 +367,8 @@ public class MusicService extends Service implements Player,
         bufferLoopedCount = 0;
     }
 
-    @Override
     @Nullable
+    @Override
     public Song getCurrentSong() {
         try {
             return queue.get(currentQueuePosition);
@@ -364,13 +383,13 @@ public class MusicService extends Service implements Player,
         playSong();
     }
 
-    @NotNull
+    @NonNull
     @Override
     public List<Song> getQueue() {
         return queue;
     }
 
-    public void setQueue(@NotNull List<Song> queue) {
+    public void setQueue(@NonNull List<Song> queue) {
         this.queue = queue;
     }
 
@@ -388,6 +407,7 @@ public class MusicService extends Service implements Player,
         return currentQueuePosition;
     }
 
+    @Override
     public boolean isShouldStart() {
         return shouldStart;
     }
@@ -407,8 +427,45 @@ public class MusicService extends Service implements Player,
         return images.get(song.getKey());
     }
 
-    private void putImageUri(@NotNull Song song, @NotNull String url) {
+    private void putImageUri(@NonNull Song song, @NonNull String url) {
         images.put(song.getKey(), url);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null || intent.getAction() == null) {
+            return super.onStartCommand(null, flags, startId);
+        }
+        Log.e("action", intent.getAction());
+        switch (intent.getAction()) {
+            case Settings.Notification.ACTION.PREV_ACTION:
+                prev();
+                break;
+            case Settings.Notification.ACTION.NEXT_ACTION:
+                next();
+                break;
+            case Settings.Notification.ACTION.PAUSE_PLAY_ACTION:
+                if (isPlaying()) {
+                    pause();
+                } else {
+                    start();
+                }
+                break;
+            case Settings.Notification.ACTION.STOP_SERVICE_ACTION:
+                stopSelf();
+                break;
+            case Settings.Notification.ACTION.BEGIN_FOREGROUND_ACTION:
+                Song currentSong = getCurrentSong();
+                if (currentSong != null) {
+                    foregroundManager.beginForeground(currentSong, isPlaying());
+                }
+                break;
+            case Settings.Notification.ACTION.END_FOREGROUND_ACTION:
+                foregroundManager.endForeground();
+                break;
+        }
+
+        return super.onStartCommand(intent, flags, startId);
     }
 
     public class MusicBinder extends Binder {
@@ -416,39 +473,4 @@ public class MusicService extends Service implements Player,
             return MusicService.this;
         }
     }
-
-    //            new AsyncTask<Song, Void, Void>() {
-//            @Override
-//            protected Void doInBackground(Song... params) {
-//                try {
-//                    String file = String.format("%s/%s.mp3",
-//                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
-//                            params[0].getTitle());
-//                    URL url = new URL(params[0].getUrl());
-//                    URLConnection urlConnection = url.openConnection();
-//                    urlConnection.connect();
-//                    int fileSize = urlConnection.getContentLength();
-//                    BufferedInputStream is = new BufferedInputStream(urlConnection.getInputStream());
-//                    BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-//                    byte[] buffer = new byte[1024];
-//                    int byteRead;
-//                    int totalRead = 0;
-//                    while ((byteRead = is.read(buffer)) > 0) {
-//                        os.write(buffer, 0, byteRead);
-//                        totalRead += byteRead;
-//                        Log.e("Async", totalRead + " of " + fileSize + " " + ((100 * totalRead) / fileSize) + " %%");
-//                    }
-//                    is.close();
-//                    os.close();
-//
-//                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(file))));
-//
-//
-//                } catch (Exception e) {
-//                    Log.e("Async", "exception " + e.toString());
-//                }
-//                Log.e("Async", "over");
-//                return null;
-//            }
-//        }.execute(getCurrentSong());
 }

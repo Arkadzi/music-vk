@@ -8,4 +8,8 @@
     <color name="primaryText">#2B2F33</color>
     <color name="text">#42648B</color>
     <color name="secondaryText">#939699</color>
+    <color name="colorControlHighlight">#12000000</color>
+    <color name="colorControlNormal">@color/secondaryText</color>
+    <color name="notification_main_text">@color/primaryText</color>
+    <color name="notification_secondary">@color/secondaryText</color>
 </resources>

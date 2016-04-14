@@ -5,11 +5,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -21,10 +18,6 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
     private final Context context;
     private List<T> mData;
     private OnItemClickListener listener;
-
-    public interface OnItemClickListener {
-        void onItemClick(int position);
-    }
 
     public AbstractListAdapter(Context c, List<T> data) {
         mData = data;
@@ -65,18 +58,18 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         T item = mData.get(position);
         String[] text = getText(item);
         TextView[] textViews = holder.textViews;
-        for (int i = 0; i < textViews.length ; i++) {
+        for (int i = 0; i < textViews.length; i++) {
             textViews[i].setText(text[i]);
         }
         holder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (listener != null) {
-                    listener.onItemClick(position);
+                    listener.onItemClick(holder.getAdapterPosition());
                 }
             }
         });
@@ -96,6 +89,9 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
         return mData.size();
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+    }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView[] textViews;
@@ -109,7 +105,7 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
             textViews = new TextView[textViewIds.length];
             imageView = (ImageView) view.findViewById(imageViewId);
 
-            for (int i = 0; i < textViewIds.length ; i++) {
+            for (int i = 0; i < textViewIds.length; i++) {
                 textViews[i] = (TextView) view.findViewById(textViewIds[i]);
             }
 

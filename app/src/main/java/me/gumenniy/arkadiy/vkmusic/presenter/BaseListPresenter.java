@@ -1,9 +1,8 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +29,16 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     private int count;
     @Nullable
     private BaseView<D> view;
-    @NotNull
+    @NonNull
     private List<D> data;
-    @NotNull
+    @NonNull
     private VkApi vkApi;
-    @NotNull
+    @NonNull
     private UserSession user;
     @Nullable
     private Call<VKResult<D>> call;
 
-    public BaseListPresenter(@NotNull VkApi api, @NotNull UserSession user) {
+    public BaseListPresenter(@NonNull VkApi api, @NonNull UserSession user) {
         Log.e("listpresenter", hashCode() + " " + api.hashCode());
         this.vkApi = api;
         this.user = user;
@@ -105,7 +104,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
 
     }
 
-    protected void showError(String s) {
+    protected void showError(@NonNull String s) {
         Log.e("Presenter", "error " + s);
         if (view != null) {
             view.showError(s);
@@ -113,7 +112,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
 
-    private void successfulResponse(VKResult<D> result) {
+    private void successfulResponse(@NonNull VKResult<D> result) {
         if (result.isSuccessful()) {
             data.addAll(result.getData());
             count = result.getCount();
@@ -124,7 +123,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         }
     }
 
-    protected boolean handled(VKError error) {
+    protected boolean handled(@NonNull VKError error) {
         switch (error.getErrorCode()) {
             case 15:
                 showError(error.getErrorMessage());
@@ -137,8 +136,8 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         return true;
     }
 
-    @NotNull
-    protected abstract Call<VKResult<D>> getApiCall(VkApi api, UserSession user);
+    @NonNull
+    protected abstract Call<VKResult<D>> getApiCall(@NonNull VkApi api, @NonNull UserSession user);
 
     public void refresh() {
         reset();
@@ -175,7 +174,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         return view;
     }
 
-    @NotNull
+    @NonNull
     public List<D> getData() {
         return data;
     }

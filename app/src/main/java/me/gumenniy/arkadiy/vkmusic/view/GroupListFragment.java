@@ -1,6 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.view;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class GroupListFragment extends BaseListFragment<Group, GroupListPresente
     }
 
     @Override
-    public void navigateBy(Group item) {
+    public void navigateBy(@NonNull Group item) {
         String groupId = String.format("-%s", item.getId());
         String title = item.getName();
 

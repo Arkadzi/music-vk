@@ -28,7 +28,7 @@ public class VKResultTypeAdapter<T> implements JsonDeserializer<VKResult<T>> {
     @Override
     public VKResult<T> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         Log.e("reader", String.format("%s %s %s", json, typeOfT, context));
-        VKResult<T> result = null;
+        VKResult<T> result;
         try {
             result = gson.fromJson(json, typeOfT);
             Log.e("result", String.valueOf(result));

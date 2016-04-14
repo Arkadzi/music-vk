@@ -7,10 +7,14 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/white</item>
-
+        <item name="android:windowTranslucentStatus">true</item>
         <item name="android:textColorSecondary">@color/secondaryText</item>
         <item name="android:textColorPrimary">@color/primaryText</item>
         <item name="android:textColor">@color/text</item>
+        <item name="selectableItemBackground">@drawable/ripple_effect</item>
+        <item name="selectableItemBackgroundBorderless">@drawable/ripple_effect_borderless</item>
+        <item name="colorControlHighlight">@color/colorControlHighlight</item>
+        <item name="colorControlNormal">@color/colorControlNormal</item>
     </style>
 
 </resources>

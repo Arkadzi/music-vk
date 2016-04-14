@@ -1,7 +1,8 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
+
 import org.greenrobot.eventbus.EventBus;
-import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,14 +24,14 @@ public class PopularSongsPresenter extends BaseListPresenter<Song> implements Me
     private int genreId;
 
     @Inject
-    public PopularSongsPresenter(@NotNull VkApi api, @NotNull UserSession user, @NotNull EventBus eventBus) {
+    public PopularSongsPresenter(@NonNull VkApi api, @NonNull UserSession user, @NonNull EventBus eventBus) {
         super(api, user);
         this.eventBus = eventBus;
     }
 
-    @NotNull
+    @NonNull
     @Override
-    protected Call<VKResult<Song>> getApiCall(VkApi api, UserSession user) {
+    protected Call<VKResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         if (genreId == 0) {
             return api.getPopularSongs(onlyEng, getData().size(), 3, user.getToken());
         } else {

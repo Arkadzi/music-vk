@@ -1,13 +1,13 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import me.gumenniy.arkadiy.vkmusic.model.Friend;
 import me.gumenniy.arkadiy.vkmusic.model.Group;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.AccessDeniedEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
@@ -22,11 +22,11 @@ import retrofit.Call;
 @Singleton
 public class GroupListPresenter extends BaseListPresenter<Group> {
 
-    @NotNull
+    @NonNull
     private final EventBus eventBus;
 
     @Inject
-    public GroupListPresenter(VkApi api, UserSession user, @NotNull EventBus eventBus) {
+    public GroupListPresenter(@NonNull VkApi api, UserSession user, @NonNull EventBus eventBus) {
         super(api, user);
         this.eventBus = eventBus;
         this.eventBus.register(this);
@@ -44,8 +44,8 @@ public class GroupListPresenter extends BaseListPresenter<Group> {
     }
 
     @Override
-    @NotNull
-    protected Call<VKResult<Group>> getApiCall(VkApi api, UserSession user) {
+    @NonNull
+    protected Call<VKResult<Group>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         return api.getGroups(user.getClientId(), getData().size(), 100, user.getToken());
     }
 
@@ -55,7 +55,8 @@ public class GroupListPresenter extends BaseListPresenter<Group> {
         Group item = getData().get(position);
         if (item.isAudioAvailable()) {
             BaseView<Group> view = getView();
-            view.navigateBy(item);
+            if (view != null)
+                view.navigateBy(item);
         } else {
             showError("-201");
         }

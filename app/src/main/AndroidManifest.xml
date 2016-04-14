@@ -17,7 +17,8 @@
             android:configChanges="orientation|screenSize"
             android:label="Login">
         </activity>
-        <activity android:name=".app.MainActivity">
+        <activity android:name=".app.MainActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

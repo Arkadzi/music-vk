@@ -67,7 +67,7 @@ public class ArtworkAdapter extends PagerAdapter {
 
     public void updateView(View view, @NotNull String url) {
         Log.e("aaa", "gotcha " + view.getTag());
-        Picasso.with(context).load(url).into((ImageView) view.findViewById(R.id.artwork));
+        Picasso.with(context).load(url).placeholder(R.drawable.default_cover).into((ImageView) view.findViewById(R.id.artwork));
     }
 
     @Override

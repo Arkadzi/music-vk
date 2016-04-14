@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.app;
+package me.gumenniy.arkadiy.vkmusic.app.async;
 
 import android.os.Handler;
 import android.os.HandlerThread;

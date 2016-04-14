@@ -1,14 +1,14 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
-import me.gumenniy.arkadiy.vkmusic.app.Player;
+import me.gumenniy.arkadiy.vkmusic.app.audio.Player;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.view.PlaybackView;
 
@@ -35,13 +35,11 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
         if (player != null) {
             switch (type) {
                 case PAUSE_PLAY:
-                    if (player.isPrepared()) {
                         if (player.isPlaying()) {
                             player.pause();
                         } else {
                             player.start();
                         }
-                    }
                     break;
                 case PREV:
                     player.prev();
@@ -82,15 +80,16 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
             if (song != null && view != null) {
                 view.setQueue(player.getQueue());
                 view.renderSong(player.getCurrentQueuePosition(), song);
-                view.updatePlaybackButtonImage(player.isPrepared() && player.isPlaying());
+                view.updatePlaybackButtonImage(player.isPlaying());
             }
         }
     }
 
     @Override
-    public void onBeginPreparingSong(int position, Song song) {
+    public void onBeginPreparingSong(int position, @NonNull Song song, boolean shouldStart) {
         if (view != null) {
             view.renderSong(position, song);
+            view.updatePlaybackButtonImage(shouldStart);
         }
     }
 
@@ -109,11 +108,11 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     }
 
     @Override
-    public void onError(Song song) {
+    public void onError(@NonNull Song song) {
     }
 
     @Override
-    public void onQueueChanged(@NotNull List<Song> queue) {
+    public void onQueueChanged(@NonNull List<Song> queue) {
         if (view != null) {
             view.setQueue(queue);
 //            view.setPosition(position);
@@ -128,7 +127,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     }
 
     @Override
-    public void onImageLoaded(Song song, String url) {
+    public void onImageLoaded(@NonNull Song song, @NonNull String url) {
         if (view != null) {
             view.renderImage(song, url);
         }

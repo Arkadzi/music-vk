@@ -1,8 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import android.support.annotation.NonNull;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,8 +25,8 @@ public class FriendListPresenter extends BaseListPresenter<Friend> {
     }
 
     @Override
-    @NotNull
-    protected Call<VKResult<Friend>> getApiCall(VkApi api, UserSession user) {
+    @NonNull
+    protected Call<VKResult<Friend>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         return api.getFriends(user.getClientId(), getData().size(), 100);
     }
 
@@ -36,7 +35,8 @@ public class FriendListPresenter extends BaseListPresenter<Friend> {
         Friend item = getData().get(position);
         if (item.isAudioAvailable()) {
             BaseView<Friend> view = getView();
-            view.navigateBy(item);
+            if (view != null)
+                view.navigateBy(item);
         } else {
             showError("201");
         }

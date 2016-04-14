@@ -1,9 +1,11 @@
-package me.gumenniy.arkadiy.vkmusic.app;
+package me.gumenniy.arkadiy.vkmusic.app.audio;
 
 
+
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
+
 
 import java.util.List;
 
@@ -13,6 +15,7 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
  * Created by Arkadiy on 18.03.2016.
  */
 public interface Player {
+    @NonNull
     List<Song> getQueue();
     int getCurrentQueuePosition();
     boolean isQueueEmpty();
@@ -22,19 +25,22 @@ public interface Player {
     void pause();
     void next();
     void prev();
-    void setPlayerListener(PlayerListener listener);
+    void setPlayerListener(@Nullable PlayerListener listener);
     void seekTo(int position);
+    @Nullable
     Song getCurrentSong();
     void playSong(int position);
-    String loadImageUrl(Song song);
+    @Nullable
+    String loadImageUrl(@NonNull Song song);
+    boolean isShouldStart();
 
     interface PlayerListener {
-        void onBeginPreparingSong(int position, Song song);
+        void onBeginPreparingSong(int position, @NonNull Song song, boolean shouldStart);
         void onSongStarted();
         void onSongPaused();
-        void onError(Song song);
-        void onQueueChanged(@NotNull List<Song> queue);
+        void onError(@NonNull Song song);
+        void onQueueChanged(@NonNull List<Song> queue);
         void onSongBuffering(int bufferedPercent, int progress);
-        void onImageLoaded(Song song, String url);
+        void onImageLoaded(@NonNull Song song, @NonNull String url);
     }
 }

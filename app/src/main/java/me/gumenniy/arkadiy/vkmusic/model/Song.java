@@ -50,6 +50,6 @@ public class Song {
     }
 
     public String getKey() {
-        return String.format("%s%s", getTitle().toLowerCase(),getArtist().toLowerCase());
+        return String.format("%s%s", getTitle().toLowerCase(),getArtist().toLowerCase()).replace(" ", "");
     }
 }

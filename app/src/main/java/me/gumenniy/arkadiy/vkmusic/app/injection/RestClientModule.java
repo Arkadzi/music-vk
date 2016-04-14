@@ -104,7 +104,7 @@ public class RestClientModule {
     @Provides
     @Singleton
     UserSession provideUserSession(SharedPreferences prefs) {
-        return new UserSession(prefs);
+        return new UserSession(prefs, app);
     }
 
     @Provides

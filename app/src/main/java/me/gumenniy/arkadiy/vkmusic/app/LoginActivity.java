@@ -2,12 +2,16 @@ package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebViewDatabase;
 import android.widget.ProgressBar;
 
 import java.io.UnsupportedEncodingException;
@@ -32,15 +36,15 @@ public class LoginActivity extends AppCompatActivity {
 
         progress = (ProgressBar) findViewById(R.id.progress);
         WebView webview = (WebView) findViewById(R.id.web);
-        webview.getSettings().setJavaScriptEnabled(true);
         webview.setVerticalScrollBarEnabled(false);
         webview.setHorizontalScrollBarEnabled(false);
+//        CookieSyncManager.createInstance(this);
         webview.clearCache(true);
+        webview.clearFormData();
         webview.setWebViewClient(new VkWebViewClient());
-
         String url = null;
         try {
-            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio,friends,groups&redirect_uri=%s&response_type=token&display=mobile",
+            url = String.format("https://oauth.vk.com/authorize?client_id=%s&scope=audio,friends,groups,offline&redirect_uri=%s&response_type=token&display=mobile",
                     Settings.CLIENT_ID,
                     URLEncoder.encode(Settings.REDIRECT_URI, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -61,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (!url.contains("error")) {
                     String token = extractValue(url, "access_token");
                     String userId = extractValue(url, "user_id");
-//                    Log.e("User", String.valueOf(user));
 
                     saveUser(token, userId);
                     finishSelf();
