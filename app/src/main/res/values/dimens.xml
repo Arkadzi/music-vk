@@ -1,12 +1,15 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="list_padding">16dp</dimen>
-    <dimen name="list_item_height">72dp</dimen>
+    <dimen name="two_line_list_item_height">72dp</dimen>
+    <dimen name="single_line_list_item_height">56dp</dimen>
     <dimen name="primary_text_size">16sp</dimen>
+    <dimen name="large_text_size">20sp</dimen>
     <dimen name="secondary_text_size">14sp</dimen>
     <dimen name="small_text_size">12sp</dimen>
     <dimen name="padding_1">8dp</dimen>
-    <dimen name="image_height">56dp</dimen>
+    <dimen name="image_height">48dp</dimen>
     <dimen name="toolbar_margin">0dp</dimen>
     <dimen name="bottom_progress_height">48dp</dimen>
+    <dimen name="padding_dialog">20dp</dimen>
 </resources>

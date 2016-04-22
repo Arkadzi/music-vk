@@ -17,15 +17,12 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
 
     private final Context context;
     private List<T> mData;
-    private OnItemClickListener listener;
+    private OnItemClickListener clickListener;
+    private OnItemLongClickListener longClickListener;
 
     public AbstractListAdapter(Context c, List<T> data) {
         mData = data;
         this.context = c;
-    }
-
-    public void setListener(OnItemClickListener listener) {
-        this.listener = listener;
     }
 
     protected void handleImageView(T item, ImageView imageView) {
@@ -65,16 +62,32 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
         for (int i = 0; i < textViews.length; i++) {
             textViews[i].setText(text[i]);
         }
+        if (holder.imageView != null) {
+            handleImageView(item, holder.imageView);
+        }
+
+        setListeners(holder);
+    }
+
+    private void setListeners(final ViewHolder holder) {
         holder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (listener != null) {
-                    listener.onItemClick(holder.getAdapterPosition());
+                if (clickListener != null) {
+                    clickListener.onItemClick(holder.getAdapterPosition());
                 }
             }
         });
-        if (holder.imageView != null) {
-            handleImageView(item, holder.imageView);
+        if (longClickListener != null) {
+            holder.view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (longClickListener != null) {
+                        longClickListener.onItemLongClick(holder.getAdapterPosition());
+                    }
+                    return false;
+                }
+            });
         }
     }
 
@@ -89,8 +102,20 @@ public abstract class AbstractListAdapter<T> extends RecyclerView.Adapter<Abstra
         return mData.size();
     }
 
+    public void setClickListener(OnItemClickListener clickListener) {
+        this.clickListener = clickListener;
+    }
+
+    public void setLongClickListener(OnItemLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
+
     public interface OnItemClickListener {
         void onItemClick(int position);
+    }
+
+    public interface OnItemLongClickListener {
+        void onItemLongClick(int position);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

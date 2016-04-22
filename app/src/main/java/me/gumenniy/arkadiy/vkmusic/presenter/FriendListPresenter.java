@@ -38,7 +38,7 @@ public class FriendListPresenter extends BaseListPresenter<Friend> {
             if (view != null)
                 view.navigateBy(item);
         } else {
-            showError("201");
+            showMessage("201");
         }
     }
 }

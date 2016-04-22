@@ -19,6 +19,8 @@
     <string name="choose_genre">Choose genre</string>
     <string name="only_eng">Only foreign</string>
     <string name="only_performer">Only performer</string>
+    <string name="pleaseWait">Please, wait...</string>
+    <string name="songAdded">Song is added to My Music</string>
     <string-array name="genres" >
         <item>All</item>
         <item>Rock</item>
@@ -68,4 +70,12 @@
         <item>22</item>
         <item>18</item>
     </integer-array>
+
+    <string-array name="menu_song_new">
+        <item>Add to My Music</item>
+    </string-array>
+
+    <string-array name="menu_song_user">
+        <item>Remove from My Music</item>
+    </string-array>
 </resources>

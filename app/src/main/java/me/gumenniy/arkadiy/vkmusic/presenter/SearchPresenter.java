@@ -1,7 +1,6 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -10,10 +9,16 @@ import javax.inject.Singleton;
 
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKAddRemoveResult;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 /**
  * Created by Arkadiy on 30.03.2016.
@@ -30,7 +35,7 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
     public SearchPresenter(@NonNull VkApi api, @NonNull UserSession user, @NonNull EventBus eventBus) {
         super(api, user);
         this.eventBus = eventBus;
-        state = STATE_IDLE;
+        state = State.STATE_IDLE;
     }
 
 
@@ -52,7 +57,7 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
 
         if (!query.isEmpty()) {
             reset();
-            loadData(STATE_FIRST_LOAD);
+            loadData(State.STATE_FIRST_LOAD);
         }
 
     }
@@ -62,11 +67,38 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
     }
 
     @Override
-    protected void loadData(int state) {
+    protected void loadData(State state) {
         if (!query.isEmpty()) {
             super.loadData(state);
         }
     }
+
+    @Override
+    public void handleMenuClick(Settings.Menu which, Song song, int position) {
+        switch (which) {
+            case Add:
+                UserSession user = getUser();
+                getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken()).enqueue(new Callback<VKAddRemoveResult>() {
+                    @Override
+                    public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
+                        VKAddRemoveResult body = response.body();
+                        if (response.isSuccess() && body.isSuccessful()) {
+                            eventBus.post(new UpdateMyMusicEvent());
+                            showMessage("added");
+                        } else {
+                            showMessage(body.getError().getErrorMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        showMessage(String.valueOf(t));
+                    }
+                });
+                break;
+        }
+    }
+
 
     @Override
     public void refresh() {

@@ -1,6 +1,8 @@
 package me.gumenniy.arkadiy.vkmusic.view;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 
 import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.SongDialogFragment;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
@@ -42,6 +45,17 @@ public class SongListFragment extends BaseListFragment<Song, SongListPresenter> 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(getArguments().getString(TITLE));
+    }
+
+    @Nullable
+    @Override
+    protected DialogFragment getMenuDialog(int item) {
+        return SongDialogFragment.newInstance(item);
+    }
+
+    @Override
+    protected boolean isHandleLongClick() {
+        return true;
     }
 
     @Override

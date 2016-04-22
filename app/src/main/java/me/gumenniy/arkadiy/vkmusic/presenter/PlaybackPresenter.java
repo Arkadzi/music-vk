@@ -25,6 +25,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     private Player player;
     @Nullable
     private PlaybackView view;
+    private boolean shouldUpdateProgress = true;
 
     @Inject
     public PlaybackPresenter() {
@@ -121,7 +122,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
 
     @Override
     public void onSongBuffering(int bufferedPercent, int progress) {
-        if (view != null) {
+        if (view != null && shouldUpdateProgress) {
             view.setBufferProgress(bufferedPercent, progress / 1000);
         }
     }
@@ -137,6 +138,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
         if (player != null) {
             player.seekTo(progress * 1000);
         }
+        shouldUpdateProgress = true;
     }
 
     @Nullable
@@ -145,5 +147,9 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
             return player.loadImageUrl(item);
         }
         return null;
+    }
+
+    public void onStartTracking() {
+        shouldUpdateProgress = false;
     }
 }

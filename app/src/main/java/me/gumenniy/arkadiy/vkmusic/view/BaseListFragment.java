@@ -4,20 +4,20 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.telephony.PhoneNumberUtils;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.github.rahatarmanahmed.cpv.CircularProgressView;
 
 import java.util.List;
 
@@ -29,10 +29,11 @@ import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.LoginActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.ProgressDialogFragment;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseListPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseView;
-import me.gumenniy.arkadiy.vkmusic.utils.Errors;
+import me.gumenniy.arkadiy.vkmusic.utils.Messages;
 import me.gumenniy.arkadiy.vkmusic.utils.Paginator;
 
 /**
@@ -42,13 +43,13 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         implements BaseView<D>, Paginator.OnPaginateListener,
         SwipeRefreshLayout.OnRefreshListener,
         AbstractListAdapter.OnItemClickListener,
-        OnBackPressListener {
+        OnBackPressListener, AbstractListAdapter.OnItemLongClickListener {
 
     public static final String TITLE = "title";
     @Bind(R.id.list)
     RecyclerView recyclerView;
     @Bind(R.id.progress_bar)
-    ProgressBar progressBar;
+    CircularProgressView progressBar;
     @Bind(R.id.bottom_progress_bar)
     View bottomProgressBar;
     @Bind(R.id.swipe_refresh)
@@ -111,6 +112,21 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
 
     }
 
+    @Override
+    public final void showMenu(int item) {
+        if (item < presenter.getData().size()) {
+            DialogFragment newFragment = getMenuDialog(item);
+            if (newFragment != null) {
+                newFragment.show(getChildFragmentManager(), "dialog");
+            }
+        }
+    }
+
+    @Nullable
+    protected DialogFragment getMenuDialog(int item) {
+        return null;
+    }
+
     private void initViews() {
         float metrics = getResources().getDisplayMetrics().density;
         float dimension = getResources().getDimension(R.dimen.bottom_progress_height);
@@ -120,12 +136,19 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(manager);
         adapter = getListAdapter();
-        adapter.setListener(this);
+        adapter.setClickListener(this);
+        if (isHandleLongClick()) {
+            adapter.setLongClickListener(this);
+        }
         recyclerView.setAdapter(adapter);
         Paginator paginator = new Paginator();
         paginator.setOnPaginateListener(this);
         paginator.paginateListView(recyclerView);
         swipeLayout.setOnRefreshListener(this);
+    }
+
+    protected boolean isHandleLongClick() {
+        return false;
     }
 
     @Override
@@ -143,12 +166,12 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void showProgress(int state) {
+    public void showProgress(BaseListPresenter.State state) {
         setVisibility(emptyView, false);
-        setVisibility(recyclerView, state == BaseListPresenter.STATE_PAGINATE);
-        setVisibility(progressBar, state == BaseListPresenter.STATE_FIRST_LOAD);
-        animate(bottomProgressBar, state == BaseListPresenter.STATE_PAGINATE);
-        setRefreshing(state == BaseListPresenter.STATE_REFRESH);
+        setVisibility(recyclerView, state == BaseListPresenter.State.STATE_PAGINATE);
+        setVisibility(progressBar, state == BaseListPresenter.State.STATE_FIRST_LOAD);
+        animate(bottomProgressBar, state == BaseListPresenter.State.STATE_PAGINATE);
+        setRefreshing(state == BaseListPresenter.State.STATE_REFRESH);
     }
 
     @Override
@@ -179,6 +202,21 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         }
     }
 
+    @Override
+    public void showProgressDialog() {
+        DialogFragment newFragment = ProgressDialogFragment.newInstance();
+        newFragment.setCancelable(false);
+        newFragment.show(getChildFragmentManager(), "progress_dialog");
+    }
+
+    @Override
+    public void hideProgressDialog() {
+        DialogFragment fragment = (DialogFragment) getChildFragmentManager().findFragmentByTag("progress_dialog");
+        if (fragment != null) {
+            fragment.dismiss();
+        }
+    }
+
     private void setRefreshing(final boolean shouldRefresh) {
         if (swipeLayout.isRefreshing() != shouldRefresh) {
             swipeLayout.post(new Runnable() {
@@ -188,7 +226,6 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
                 }
             });
         }
-
     }
 
     @Override
@@ -197,12 +234,12 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void showError(@NonNull String error) {
-        Integer errorId = Errors.get(error);
+    public void showMessage(@NonNull String message) {
+        Integer errorId = Messages.get(message);
         if (errorId != null) {
-            error = getString(errorId);
+            message = getString(errorId);
         }
-        Toast.makeText(getActivity(), error, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -238,5 +275,10 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     @Override
     public boolean backPressHandled() {
         return false;
+    }
+
+    @Override
+    public void onItemLongClick(int position) {
+        presenter.handleLongClick(position);
     }
 }

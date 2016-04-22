@@ -23,4 +23,6 @@ public interface Settings {
             String END_FOREGROUND_ACTION = "me.gumenniy.arkadiy.vkmusic.action.end";
         }
     }
+
+    enum Menu {Add, Delete}
 }

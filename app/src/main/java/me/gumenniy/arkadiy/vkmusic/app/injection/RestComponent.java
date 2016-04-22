@@ -6,6 +6,9 @@ import dagger.Component;
 import me.gumenniy.arkadiy.vkmusic.app.LoginActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicService;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.PopularSongDialogFragment;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.SearchDialogFragment;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.SongDialogFragment;
 import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.PopularSongsFragment;
@@ -26,8 +29,13 @@ public interface RestComponent {
     void inject(SearchFragment searchFragment);
     void inject(PopularSongsFragment popularSongsFragment);
 
+    void inject(SongDialogFragment songDialogFragment);
+    void inject(PopularSongDialogFragment popularSongDialogFragment);
+    void inject(SearchDialogFragment searchDialogFragment);
+
     void inject(MainActivity activity);
     void inject(LoginActivity activity);
 
     void inject(MusicService musicService);
+
 }

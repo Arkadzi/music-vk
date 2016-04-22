@@ -1,6 +1,8 @@
 package me.gumenniy.arkadiy.vkmusic.view;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
@@ -19,6 +21,8 @@ import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.SearchDialogFragment;
+import me.gumenniy.arkadiy.vkmusic.app.dialogs.SongDialogFragment;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.SearchPresenter;
@@ -48,7 +52,16 @@ public class SearchFragment extends BaseListFragment<Song, SearchPresenter> impl
         setHasOptionsMenu(true);
     }
 
+    @Nullable
+    @Override
+    protected DialogFragment getMenuDialog(int item) {
+        return SearchDialogFragment.newInstance(item);
+    }
 
+    @Override
+    protected boolean isHandleLongClick() {
+        return true;
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

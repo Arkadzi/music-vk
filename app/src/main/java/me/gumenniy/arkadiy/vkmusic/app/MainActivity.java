@@ -182,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                presenter.onStartTracking();
             }
 
             @Override
@@ -192,6 +193,15 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     private void initSlidingPanel() {
+        panel.addPanelSlideListener(new SlidingUpPanelLayout.SimplePanelSlideListener() {
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+                if (newState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    songNameView.setSelected(true);
+                    artistNameView.setSelected(true);
+                }
+            }
+        });
         panel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
 

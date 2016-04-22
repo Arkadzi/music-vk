@@ -1,64 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/pager"
+    <me.gumenniy.arkadiy.vkmusic.app.view.SquareLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-    <!--<me.gumenniy.arkadiy.vkmusic.app.view.SquareImageView-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:id="@+id/artwork"-->
-    <!--custom:direction="width"-->
-    <!--android:layout_gravity="center_horizontal" />-->
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/song_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Large Text"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        <android.support.v4.view.ViewPager
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </me.gumenniy.arkadiy.vkmusic.app.view.SquareLayout>
 
-    <TextView
-        android:id="@+id/artist_name"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Medium Text"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:orientation="vertical"
+        android:padding="@dimen/list_padding">
+
+        <TextView
+            android:id="@+id/song_name"
+            style="@style/MarqueeTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="@dimen/large_text_size"
+            tools:text="Large Text" />
+
+        <TextView
+            android:id="@+id/artist_name"
+            style="@style/MarqueeTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="@dimen/primary_text_size"
+            tools:text="Medium Text" />
+    </LinearLayout>
 
     <SeekBar
         android:id="@+id/seek_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:indeterminate="false" />
+        android:layout_gravity="center_horizontal" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/prev_button"
+            style="@style/PlaybackButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_skip_previous_white_48dp" />
 
         <ImageButton
             android:id="@+id/pp_button"
+            style="@style/PlaybackButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_play_arrow_white_48dp" />
 
         <ImageButton
             android:id="@+id/next_button"
+            style="@style/PlaybackButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_skip_next_white_48dp" />

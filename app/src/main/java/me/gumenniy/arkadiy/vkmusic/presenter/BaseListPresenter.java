@@ -7,10 +7,12 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKError;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.Response;
@@ -20,12 +22,13 @@ import retrofit.Retrofit;
  * Created by Arkadiy on 07.03.2016.
  */
 public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>> {
-    public static final int STATE_FIRST_LOAD = 0;
-    public static final int STATE_PAGINATE = 1;
-    public static final int STATE_REFRESH = 2;
-    public static final int STATE_IDLE = 3;
-    public static final int STATE_FIRST_BIND = 4;
-    protected int state;
+//    public static final int STATE_FIRST_LOAD = 0;
+//    public static final int STATE_PAGINATE = 1;
+//    public static final int STATE_REFRESH = 2;
+//    public static final int STATE_IDLE = 3;
+//    public static final int STATE_FIRST_BIND = 4;
+    public enum State {STATE_FIRST_LOAD, STATE_PAGINATE, STATE_REFRESH, STATE_IDLE, STATE_FIRST_BIND}
+    protected State state;
     private int count;
     @Nullable
     private BaseView<D> view;
@@ -49,9 +52,9 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     public void bindView(@Nullable BaseView<D> view) {
         this.view = view;
         if (view != null) {
-            if (state == STATE_FIRST_BIND) {
-                loadData(STATE_FIRST_LOAD);
-            } else if (state == STATE_IDLE) {
+            if (state == State.STATE_FIRST_BIND) {
+                loadData(State.STATE_FIRST_LOAD);
+            } else if (state == State.STATE_IDLE) {
                 onLoadingStop();
             } else {
                 view.renderData(data);
@@ -72,13 +75,13 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
                 }
             }).start();
         }
-        state = STATE_FIRST_BIND;
+        state = State.STATE_FIRST_BIND;
         data = new ArrayList<>();
         count = -1;
     }
 
 
-    protected void loadData(int state) {
+    protected void loadData(State state) {
         onLoadingStart(state);
 
         call = getApiCall(vkApi, user);
@@ -88,7 +91,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
                 if (response.isSuccess()) {
                     successfulResponse(response.body());
                 } else {
-                    showError(String.valueOf(response.errorBody()));
+                    showMessage(String.valueOf(response.errorBody()));
                 }
                 onLoadingStop();
                 call = null;
@@ -97,17 +100,16 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
             @Override
             public void onFailure(Throwable t) {
                 onLoadingStop();
-                showError(t.toString());
+                showMessage(t.toString());
                 call = null;
             }
         });
 
     }
 
-    protected void showError(@NonNull String s) {
-        Log.e("Presenter", "error " + s);
+    protected void showMessage(@NonNull String message) {
         if (view != null) {
-            view.showError(s);
+            view.showMessage(message);
         }
     }
 
@@ -123,10 +125,24 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         }
     }
 
+    protected void dismissProgressDialog() {
+        BaseView<D> view = getView();
+        if (view != null) {
+            view.hideProgressDialog();
+        }
+    }
+
+    protected void showProgressDialog() {
+        BaseView<D> view = getView();
+        if (view != null) {
+            view.showProgressDialog();
+        }
+    }
+
     protected boolean handled(@NonNull VKError error) {
         switch (error.getErrorCode()) {
             case 15:
-                showError(error.getErrorMessage());
+                showMessage(error.getErrorMessage());
                 if (view != null) {
                     view.dismiss();
                 }
@@ -141,16 +157,16 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
 
     public void refresh() {
         reset();
-        loadData(STATE_REFRESH);
+        loadData(State.STATE_REFRESH);
     }
 
     public void paginate() {
-        if (count > data.size() && state == STATE_IDLE) {
-            loadData(STATE_PAGINATE);
+        if (count > data.size() && state == State.STATE_IDLE) {
+            loadData(State.STATE_PAGINATE);
         }
     }
 
-    protected void onLoadingStart(int state) {
+    protected void onLoadingStart(State state) {
         this.state = state;
 
         if (view != null) {
@@ -159,7 +175,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
     protected void onLoadingStop() {
-        state = STATE_IDLE;
+        state = State.STATE_IDLE;
 
         if (view != null) {
             view.renderData(data);
@@ -169,6 +185,16 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
 
     public abstract void handleClick(int position);
 
+    public void handleMenuClick(Settings.Menu which, Song song, int position) {
+
+    }
+
+    public final void handleLongClick(int position){
+        if (view != null) {
+            view.showMenu(position);
+        }
+    }
+
     @Nullable
     public BaseView<D> getView() {
         return view;
@@ -177,5 +203,16 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     @NonNull
     public List<D> getData() {
         return data;
+    }
+
+
+    @NonNull
+    public VkApi getVkApi() {
+        return vkApi;
+    }
+
+    @NonNull
+    public UserSession getUser() {
+        return user;
     }
 }

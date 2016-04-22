@@ -10,9 +10,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.telecom.Connection;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
@@ -74,6 +71,8 @@ public class MusicService extends Service implements Player,
     private PlayerExecutor playerExecutor;
     private Handler handler;
     private ForegroundManager foregroundManager;
+    @Nullable
+    private Song lastPreparingSong;
 
     @Override
     public void onCreate() {
@@ -110,10 +109,14 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        Log.e("play", "prepared ");
         isPrepared = true;
         seekTo(savedPosition);
         if (isShouldStart()) {
             start();
+        }
+        if (getImageUrl(getCurrentSong()) == null) {
+            loadImageUrlAsync(getCurrentSong());
         }
     }
 
@@ -139,7 +142,7 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Log.e("play", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
+//        Log.e("play", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
         if (!isPrepared() && (prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
@@ -162,16 +165,17 @@ public class MusicService extends Service implements Player,
         resetBufferCount();
         final Song playSong = getCurrentSong();
         if (playSong != null) {
-            Log.e("play", "_____BEGIN_____" + playSong.getTitle());
+            Log.e("play", "play " + playSong.getTitle());
             playerExecutor.postTask(RESET, new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        Log.e("play", "_____RESET_____" + playSong.getTitle());
                         player.reset();
-                        player.setDataSource(playSong.getUrl());
-                        player.prepareAsync();
-                        Log.e("play", "_____PREPARING_____" + playSong.getTitle());
+                        if (playSong == getCurrentSong()) {
+                            player.setDataSource(playSong.getUrl());
+                            player.prepareAsync();
+                        }
+
                     } catch (Exception e) {
                         Log.e("play", "exception " + String.valueOf(e));
                     }
@@ -195,11 +199,7 @@ public class MusicService extends Service implements Player,
     @Override
     public String loadImageUrl(@NonNull Song song) {
         String url = getImageUrl(song);
-        Log.e("handler", song.getTitle() + "_________________" + url);
-        if (url == null) {
-            loadImageUrlAsync(song);
-            return null;
-        } else if (!url.equals(NONE)) {
+        if (url != null && !url.equals(NONE)) {
             return url;
         }
         return null;
@@ -212,10 +212,9 @@ public class MusicService extends Service implements Player,
             @Override
             public void run() {
                 try {
-                    Log.e("handler", "_________BEGIN " + song.getTitle());
+                    Log.e("play", "image " + song.getTitle());
                     Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
                     Response<Artwork> artworkResponse = artworkCall.execute();
-                    Log.e("handler", "_________END " + song.getTitle());
                     if (artworkResponse.isSuccess()) {
                         Artwork artwork = artworkResponse.body();
                         url = artwork.getUri();
@@ -228,19 +227,24 @@ public class MusicService extends Service implements Player,
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("handler", song.getTitle() + "_____LOADED " + url);
+                        Log.e("play", "image loaded " + song.getTitle());
                         if (url != null) {
                             if (url.isEmpty()) {
                                 putImageUri(song, NONE);
                             } else {
                                 putImageUri(song, url);
                                 notifyImageLoaded(song, url);
+
+                                Song currSong = getCurrentSong();
+                                if (song.equals(currSong)) {
+                                    foregroundManager.updateRemoteView(song, isPlaying());
+                                }
                             }
                         }
                     }
                 });
             }
-        }, false, false);
+        }, true, false);
     }
 
     private void notifyImageLoaded(Song song, String url) {
@@ -250,14 +254,12 @@ public class MusicService extends Service implements Player,
     }
 
     private void resetPlayer(boolean resetPosition) {
-        Log.e("debug", "resetPlayer()");
         if (isPrepared() && !resetPosition) {
             savedPosition = getCurrentSongPosition();
         } else {
             savedPosition = 0;
         }
         playSong();
-        Log.e("debug", "resetPlayer() end");
     }
 
     private void initMediaPlayer() {

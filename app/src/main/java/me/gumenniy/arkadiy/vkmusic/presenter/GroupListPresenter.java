@@ -58,7 +58,7 @@ public class GroupListPresenter extends BaseListPresenter<Group> {
             if (view != null)
                 view.navigateBy(item);
         } else {
-            showError("-201");
+            showMessage("-201");
         }
     }
 }

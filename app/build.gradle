@@ -55,6 +55,7 @@ dependencies {
     compile 'com.android.support:design:23.3.0'
     compile 'com.android.support:support-v4:23.3.0'
     compile 'com.android.support:recyclerview-v7:23.3.0'
+    compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
     compile 'org.jetbrains:annotations:13.0'
 }
 //buildscript {

@@ -22,7 +22,7 @@ public class SongAdapter extends AbstractListAdapter<Song> {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.icon_list_item;
+        return R.layout.iconless_list_item;
     }
 
     @Override

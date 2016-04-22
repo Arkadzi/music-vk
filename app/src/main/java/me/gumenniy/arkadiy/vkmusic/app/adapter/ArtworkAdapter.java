@@ -54,7 +54,6 @@ public class ArtworkAdapter extends PagerAdapter {
         View view = inflater.inflate(R.layout.artwork_item, collection, false);
         if (item != null) {
             view.setTag(item.getKey());
-            Log.e("aaa", "instantiate " + view.getTag());
             String url = presenter.askUrl(item);
             ((TextView) view.findViewById(R.id.title)).setText(position + ") " + String.valueOf(item));
             if (url != null) {
@@ -66,13 +65,11 @@ public class ArtworkAdapter extends PagerAdapter {
     }
 
     public void updateView(View view, @NotNull String url) {
-        Log.e("aaa", "gotcha " + view.getTag());
         Picasso.with(context).load(url).placeholder(R.drawable.default_cover).into((ImageView) view.findViewById(R.id.artwork));
     }
 
     @Override
     public void destroyItem(ViewGroup collection, int position, Object view) {
-        Log.e("aaa", "destroy " + ((View) view).getTag());
         collection.removeView((View) view);
     }
 
