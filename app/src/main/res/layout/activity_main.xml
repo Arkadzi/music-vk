@@ -3,7 +3,8 @@
     xmlns:sothree="http://schemas.android.com/tools"
     android:id="@+id/drawer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent">
+
     <com.sothree.slidinguppanel.SlidingUpPanelLayout
         android:id="@+id/sliding_up_panel"
         android:layout_width="match_parent"
@@ -11,37 +12,49 @@
         android:gravity="bottom"
         sothree:umanoPanelHeight="?android:attr/actionBarSize"
         sothree:umanoShadowHeight="4dp">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
+
             <android.support.design.widget.AppBarLayout
                 android:layout_width="match_parent"
-                android:background="?attr/colorPrimaryDark"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:background="?attr/colorPrimaryDark">
 
                 <android.support.v7.widget.Toolbar
-                    android:layout_marginTop="@dimen/toolbar_margin"
                     android:id="@+id/tool_bar"
                     android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:layout_marginTop="@dimen/toolbar_margin"
                     android:background="?attr/colorPrimary"
-                    app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                    android:layout_height="?attr/actionBarSize" />
+                    app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
             </android.support.design.widget.AppBarLayout>
 
             <FrameLayout
-                android:id="@+id/fragment_container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent">
+
+                <FrameLayout
+                    android:id="@+id/fragment_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/shadow_height"
+                    android:background="@drawable/below_shadow" />
+            </FrameLayout>
 
         </LinearLayout>
 
         <include
             android:id="@+id/playback_panel"
+            layout="@layout/playback_panel"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            layout="@layout/playback_panel" />
+            android:layout_height="match_parent" />
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 
     <android.support.design.widget.NavigationView

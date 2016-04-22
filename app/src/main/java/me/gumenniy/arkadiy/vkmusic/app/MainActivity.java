@@ -263,6 +263,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     }
 
     private void prepareDrawer() {
+        drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem) {
