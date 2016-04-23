@@ -399,10 +399,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
                 adapter.updateView(child, url);
             }
         }
-//        View view = pager.findViewWithTag(song.getKey());
-//        if (view != null) {
-//            adapter.updateView(view, url);
-//        }
     }
 
     @OnClick(R.id.prev_button)

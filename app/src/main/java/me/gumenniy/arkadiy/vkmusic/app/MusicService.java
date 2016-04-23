@@ -70,9 +70,22 @@ public class MusicService extends Service implements Player,
     private int savedPosition;
     private PlayerExecutor playerExecutor;
     private Handler handler;
+    private boolean localStoragePlayback;
     private ForegroundManager foregroundManager;
-    @Nullable
-    private Song lastPreparingSong;
+    private Runnable bufferUpdating = new Runnable() {
+        @Override
+        public void run() {
+            int currentSongPosition = 0;
+            if (playerListener != null && isPrepared()) {
+                currentSongPosition = getCurrentSongPosition();
+                playerListener.onSongBuffering(0, currentSongPosition);
+            }
+            int delayMillis = 1000 - (currentSongPosition % 1000);
+            Log.e("update", (playerListener != null && isPrepared()) + " " + currentSongPosition / 1000 + " delayMillis " + delayMillis);
+
+            handler.postDelayed(this, delayMillis);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -102,8 +115,7 @@ public class MusicService extends Service implements Player,
         if (playerListener != null) {
             playerListener.onQueueChanged(getQueue());
         }
-//        new AsyncDownloader(getCurrentSong().getUrl()).execute();
-
+        localStoragePlayback = event.localStorage;
         resetPlayer(true);
     }
 
@@ -142,7 +154,6 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-//        Log.e("play", String.format("percent = %d isPrepared = %b isPlaying = %b count = %d", percent, isPrepared(), (isPrepared() && isPlaying()), bufferLoopedCount));
         if (!isPrepared() && (prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
@@ -154,12 +165,16 @@ public class MusicService extends Service implements Player,
         }
         prevPercent = percent;
 
+        notifySongBuffering(percent);
+    }
+
+    private void notifySongBuffering(int percent) {
         if (playerListener != null) {
             playerListener.onSongBuffering(percent, player.getCurrentPosition());
         }
     }
 
-    public void playSong() {
+    private void playSong() {
         isPrepared = false;
 
         resetBufferCount();
@@ -254,6 +269,7 @@ public class MusicService extends Service implements Player,
     }
 
     private void resetPlayer(boolean resetPosition) {
+        stopUpdatingSongBuffering();
         if (isPrepared() && !resetPosition) {
             savedPosition = getCurrentSongPosition();
         } else {
@@ -291,16 +307,27 @@ public class MusicService extends Service implements Player,
         playerExecutor.quit();
     }
 
+    private void startUpdatingSongBuffering() {
+        stopUpdatingSongBuffering();
+        if (localStoragePlayback) {
+            bufferUpdating.run();
+        }
+    }
+
+    private void stopUpdatingSongBuffering() {
+        handler.removeCallbacks(bufferUpdating);
+    }
+
     @Override
     public void start() {
         setShouldStart(true);
         if (isPrepared()) {
             player.start();
+            startUpdatingSongBuffering();
         }
         if (playerListener != null) {
             playerListener.onSongStarted();
         }
-
         Song currentSong = getCurrentSong();
         if (currentSong != null)
             foregroundManager.updateRemoteView(currentSong, true);
@@ -311,11 +338,11 @@ public class MusicService extends Service implements Player,
         setShouldStart(false);
         if (isPrepared()) {
             player.pause();
+            stopUpdatingSongBuffering();
         }
         if (playerListener != null) {
             playerListener.onSongPaused();
         }
-
         Song currentSong = getCurrentSong();
         if (currentSong != null)
             foregroundManager.updateRemoteView(currentSong, false);
@@ -342,6 +369,11 @@ public class MusicService extends Service implements Player,
     @Override
     public void setPlayerListener(@Nullable PlayerListener listener) {
         playerListener = listener;
+        if (listener == null) {
+            stopUpdatingSongBuffering();
+        } else {
+            startUpdatingSongBuffering();
+        }
     }
 
     @Override
@@ -382,7 +414,7 @@ public class MusicService extends Service implements Player,
     @Override
     public void playSong(int position) {
         setQueuePosition(position);
-        playSong();
+        resetPlayer(true);
     }
 
     @NonNull

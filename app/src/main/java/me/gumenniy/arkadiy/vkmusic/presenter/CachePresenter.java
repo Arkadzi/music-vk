@@ -53,7 +53,7 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
 
     @Override
     public void handleClick(int position) {
-        eventBus.post(new PlayQueueEvent(data, position));
+        eventBus.post(new PlayQueueEvent(data, position, true));
     }
 
     private void startLoad(State stateFirstLoad) {

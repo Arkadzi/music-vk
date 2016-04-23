@@ -10,9 +10,16 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
 public class PlayQueueEvent {
     public List<Song> queue;
     public int position;
+    public boolean localStorage;
 
     public PlayQueueEvent(List<Song> queue, int position) {
         this.queue = queue;
         this.position = position;
+    }
+
+    public PlayQueueEvent(List<Song> queue, int position, boolean localStorage) {
+        this.queue = queue;
+        this.position = position;
+        this.localStorage = localStorage;
     }
 }
