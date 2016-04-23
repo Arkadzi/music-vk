@@ -1,6 +1,9 @@
 package me.gumenniy.arkadiy.vkmusic.app.injection;
 
+import android.content.ContentResolver;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -23,6 +26,7 @@ import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
 import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
+import me.gumenniy.arkadiy.vkmusic.model.SongCache;
 import me.gumenniy.arkadiy.vkmusic.rest.LastFMApi;
 import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.AlbumAdapter;
 import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.ArtworkAdapter;
@@ -94,6 +98,11 @@ public class RestClientModule {
         return retrofit.create(LastFMApi.class);
     }
 
+    @Provides
+    @Singleton
+    public SongCache provideSongCache() {
+        return new SongCache(app);
+    }
 
     @Provides
     @Singleton

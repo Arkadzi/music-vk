@@ -33,6 +33,7 @@ import me.gumenniy.arkadiy.vkmusic.app.dialogs.ProgressDialogFragment;
 import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseListPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseView;
+import me.gumenniy.arkadiy.vkmusic.presenter.State;
 import me.gumenniy.arkadiy.vkmusic.utils.Messages;
 import me.gumenniy.arkadiy.vkmusic.utils.Paginator;
 
@@ -102,12 +103,6 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-//        height = bottomProgressBar.getHeight();
-    }
-
-    @Override
     public void navigateBy(@NonNull D item) {
 
     }
@@ -166,12 +161,12 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     }
 
     @Override
-    public void showProgress(BaseListPresenter.State state) {
+    public void showProgress(State state) {
         setVisibility(emptyView, false);
-        setVisibility(recyclerView, state == BaseListPresenter.State.STATE_PAGINATE);
-        setVisibility(progressBar, state == BaseListPresenter.State.STATE_FIRST_LOAD);
-        animate(bottomProgressBar, state == BaseListPresenter.State.STATE_PAGINATE);
-        setRefreshing(state == BaseListPresenter.State.STATE_REFRESH);
+        setVisibility(recyclerView, state == State.STATE_PAGINATE);
+        setVisibility(progressBar, state == State.STATE_FIRST_LOAD);
+        animate(bottomProgressBar, state == State.STATE_PAGINATE);
+        setRefreshing(state == State.STATE_REFRESH);
     }
 
     @Override

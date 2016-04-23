@@ -42,6 +42,7 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import me.gumenniy.arkadiy.vkmusic.view.CacheFragment;
 import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
 import me.gumenniy.arkadiy.vkmusic.view.OnBackPressListener;
@@ -284,6 +285,9 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
                         break;
                     case R.id.recommend_item:
                         fragment = SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.recommended), true);
+                        break;
+                    case R.id.loaded_item:
+                        fragment = CacheFragment.newInstance();
                         break;
                     case R.id.popular_item:
                         fragment = PopularSongsFragment.newInstance(getString(R.string.popular));

@@ -7,4 +7,6 @@ import android.support.annotation.Nullable;
  */
 public interface BasePresenter<V> {
     void bindView(@Nullable V view);
+
+    void handleClick(int position);
 }

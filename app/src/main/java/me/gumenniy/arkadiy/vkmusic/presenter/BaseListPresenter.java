@@ -22,12 +22,6 @@ import retrofit.Retrofit;
  * Created by Arkadiy on 07.03.2016.
  */
 public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>> {
-//    public static final int STATE_FIRST_LOAD = 0;
-//    public static final int STATE_PAGINATE = 1;
-//    public static final int STATE_REFRESH = 2;
-//    public static final int STATE_IDLE = 3;
-//    public static final int STATE_FIRST_BIND = 4;
-    public enum State {STATE_FIRST_LOAD, STATE_PAGINATE, STATE_REFRESH, STATE_IDLE, STATE_FIRST_BIND}
     protected State state;
     private int count;
     @Nullable
@@ -183,6 +177,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         }
     }
 
+    @Override
     public abstract void handleClick(int position);
 
     public void handleMenuClick(Settings.Menu which, Song song, int position) {

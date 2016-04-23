@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * Created by Arkadiy on 24.02.2016.
  */
 public class Song {
+    public static final String LOCAL_ID = "0";
     private String id;
     private String title;
     private String artist;
