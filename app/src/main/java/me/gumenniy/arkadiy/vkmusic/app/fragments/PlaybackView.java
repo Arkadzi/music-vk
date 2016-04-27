@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.view;
+package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 
 import android.support.annotation.NonNull;

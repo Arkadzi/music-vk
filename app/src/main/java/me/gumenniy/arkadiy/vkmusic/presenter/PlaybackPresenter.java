@@ -10,7 +10,7 @@ import javax.inject.Inject;
 
 import me.gumenniy.arkadiy.vkmusic.app.audio.Player;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
-import me.gumenniy.arkadiy.vkmusic.view.PlaybackView;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.PlaybackView;
 
 /**
  * Created by Arkadiy on 18.03.2016.

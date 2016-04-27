@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.app.adapter;
+package me.gumenniy.arkadiy.vkmusic.app.adapters;
 
 import android.content.Context;
 import android.widget.ImageView;
@@ -9,20 +9,19 @@ import java.util.List;
 
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.model.Friend;
-import me.gumenniy.arkadiy.vkmusic.model.Group;
 import me.gumenniy.arkadiy.vkmusic.utils.CircleTransform;
 
 /**
  * Created by Arkadiy on 28.02.2016.
  */
-public class GroupAdapter extends AbstractListAdapter<Group> {
+public class FriendAdapter extends AbstractListAdapter<Friend> {
 
-    public GroupAdapter(Context context, List<Group> data) {
+    public FriendAdapter(Context context, List<Friend> data) {
         super(context, data);
     }
 
     @Override
-    protected void handleImageView(Group item, ImageView imageView) {
+    protected void handleImageView(Friend item, ImageView imageView) {
         Picasso.with(getContext()).load(item.getPhoto()).transform(new CircleTransform()).into(imageView);
     }
 
@@ -33,7 +32,7 @@ public class GroupAdapter extends AbstractListAdapter<Group> {
 
     @Override
     protected int[] getTextViewIds() {
-        return new int[]{R.id.main};
+        return new int[] {R.id.main};
     }
 
     @Override
@@ -42,8 +41,8 @@ public class GroupAdapter extends AbstractListAdapter<Group> {
     }
 
     @Override
-    protected String[] getText(Group item) {
-        return new String[]{item.getName()};
+    protected String[] getText(Friend item) {
+        return new String[] {String.format("%s %s", item.getFirstName(), item.getLastName())};
     }
 
 

@@ -36,20 +36,20 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.ArtworkAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.ArtworkAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.view.SimplePagerListener;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.PlaybackPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
-import me.gumenniy.arkadiy.vkmusic.view.CacheFragment;
-import me.gumenniy.arkadiy.vkmusic.view.FriendListFragment;
-import me.gumenniy.arkadiy.vkmusic.view.GroupListFragment;
-import me.gumenniy.arkadiy.vkmusic.view.OnBackPressListener;
-import me.gumenniy.arkadiy.vkmusic.view.PlaybackView;
-import me.gumenniy.arkadiy.vkmusic.view.PopularSongsFragment;
-import me.gumenniy.arkadiy.vkmusic.view.SearchFragment;
-import me.gumenniy.arkadiy.vkmusic.view.SongListFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.CacheFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.FriendListFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.GroupListFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.OnBackPressListener;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.PlaybackView;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.PopularSongsFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.SearchFragment;
+import me.gumenniy.arkadiy.vkmusic.app.fragments.SongListFragment;
 
 public class MainActivity extends AppCompatActivity implements RequestTokenListener, PlaybackView {
 

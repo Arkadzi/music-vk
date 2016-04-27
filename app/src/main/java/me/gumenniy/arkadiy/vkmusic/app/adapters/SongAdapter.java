@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.app.adapter;
+package me.gumenniy.arkadiy.vkmusic.app.adapters;
 
 import android.content.Context;
 

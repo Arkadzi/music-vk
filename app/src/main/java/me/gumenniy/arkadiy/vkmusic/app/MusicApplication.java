@@ -2,13 +2,10 @@ package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.SharedPreferences;
 
-import me.gumenniy.arkadiy.vkmusic.app.injection.DaggerRestComponent;
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestClientModule;
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
-import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
-import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.RestClientModule;
+import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
 
 /**
  * Created by Arkadiy on 24.02.2016.

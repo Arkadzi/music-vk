@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.view;
+package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,10 +10,10 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.AbstractListAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.dialogs.SongDialogFragment;
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.SongListPresenter;
 

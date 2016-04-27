@@ -2,6 +2,8 @@ package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -11,6 +13,9 @@ import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -52,7 +57,8 @@ public class MusicService extends Service implements Player,
     EventBus eventBus;
     @Inject
     LastFMApi artworkApi;
-
+    @Inject
+    Picasso picasso;
     //error calculating
     private int bufferLoopedCount;
     private int prevPercent;
@@ -116,7 +122,7 @@ public class MusicService extends Service implements Player,
             playerListener.onQueueChanged(getQueue());
         }
         localStoragePlayback = event.localStorage;
-        resetPlayer(true);
+        playCurrentSong(true);
     }
 
     @Override
@@ -148,7 +154,7 @@ public class MusicService extends Service implements Player,
                 playerListener.onError(currentSong);
         }
         if (!(what == 1 && extra == -1004))
-            resetPlayer(true);
+            playCurrentSong(true);
         return true;
     }
 
@@ -157,7 +163,7 @@ public class MusicService extends Service implements Player,
         if (!isPrepared() && (prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
-                resetPlayer(false);
+                playCurrentSong(false);
                 return;
             }
         } else {
@@ -174,29 +180,14 @@ public class MusicService extends Service implements Player,
         }
     }
 
-    private void playSong() {
-        isPrepared = false;
-
-        resetBufferCount();
-        final Song playSong = getCurrentSong();
-        if (playSong != null) {
-            Log.e("play", "play " + playSong.getTitle());
-            playerExecutor.postTask(RESET, new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        player.reset();
-                        if (playSong == getCurrentSong()) {
-                            player.setDataSource(playSong.getUrl());
-                            player.prepareAsync();
-                        }
-
-                    } catch (Exception e) {
-                        Log.e("play", "exception " + String.valueOf(e));
-                    }
-                }
-            }, true, true);
-            notifyBeginPreparing();
+    private void reset(Song playSong) {
+        try {
+            player.reset();
+            if (playSong == getCurrentSong()) {
+                player.setDataSource(playSong.getUrl());
+                player.prepareAsync();
+            }
+        } catch (Exception e) {
         }
     }
 
@@ -222,44 +213,55 @@ public class MusicService extends Service implements Player,
 
     private void loadImageUrlAsync(final Song song) {
         playerExecutor.postTask(LOAD, new Runnable() {
-            String url;
 
             @Override
             public void run() {
-                try {
-                    Log.e("play", "image " + song.getTitle());
-                    Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
-                    Response<Artwork> artworkResponse = artworkCall.execute();
-                    if (artworkResponse.isSuccess()) {
-                        Artwork artwork = artworkResponse.body();
-                        url = artwork.getUri();
-                    }
-                } catch (NullPointerException npe) {
-                    url = "";
-                } catch (Exception e) {
-                    Log.e("exception", song.getTitle() + " " + String.valueOf(e));
-                }
+                final String url = requestArtworkUrl(song);
+
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("play", "image loaded " + song.getTitle());
-                        if (url != null) {
-                            if (url.isEmpty()) {
-                                putImageUri(song, NONE);
-                            } else {
-                                putImageUri(song, url);
-                                notifyImageLoaded(song, url);
-
-                                Song currSong = getCurrentSong();
-                                if (song.equals(currSong)) {
-                                    foregroundManager.updateRemoteView(song, isPlaying());
-                                }
-                            }
-                        }
+                        handleLoadedUrl(song, url);
                     }
                 });
             }
         }, true, false);
+    }
+
+    private String requestArtworkUrl(Song song) {
+        String result = null;
+        try {
+            Log.e("play", "image " + song.getTitle());
+            Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
+            Response<Artwork> artworkResponse = artworkCall.execute();
+            if (artworkResponse.isSuccess()) {
+                Artwork artwork = artworkResponse.body();
+                result = artwork.getUri();
+            }
+        } catch (NullPointerException npe) {
+            Log.e("npexception", song.getTitle() + " " + String.valueOf(npe));
+            result = "";
+        } catch (Exception e) {
+            Log.e("exception", song.getTitle() + " " + String.valueOf(e));
+        }
+        return result;
+    }
+
+    private void handleLoadedUrl(Song song, String url) {
+        Log.e("play", "image loaded " + song.getTitle());
+        if (url != null) {
+            if (url.isEmpty()) {
+                putImageUri(song, NONE);
+            } else {
+                putImageUri(song, url);
+                notifyImageLoaded(song, url);
+
+                Song currSong = getCurrentSong();
+                if (song.equals(currSong)) {
+                    foregroundManager.updateRemoteView(song, isPlaying());
+                }
+            }
+        }
     }
 
     private void notifyImageLoaded(Song song, String url) {
@@ -268,14 +270,27 @@ public class MusicService extends Service implements Player,
         }
     }
 
-    private void resetPlayer(boolean resetPosition) {
+    private void playCurrentSong(boolean resetPosition) {
         stopUpdatingSongBuffering();
         if (isPrepared() && !resetPosition) {
             savedPosition = getCurrentSongPosition();
         } else {
             savedPosition = 0;
         }
-        playSong();
+
+        isPrepared = false;
+
+        resetBufferCount();
+        final Song playSong = getCurrentSong();
+        if (playSong != null) {
+            playerExecutor.postTask(RESET, new Runnable() {
+                @Override
+                public void run() {
+                    reset(playSong);
+                }
+            }, true, true);
+            notifyBeginPreparing();
+        }
     }
 
     private void initMediaPlayer() {
@@ -353,7 +368,7 @@ public class MusicService extends Service implements Player,
         if (!isQueueEmpty()) {
             currentQueuePosition = (++currentQueuePosition) % getQueue().size();
 
-            resetPlayer(true);
+            playCurrentSong(true);
         }
     }
 
@@ -362,7 +377,7 @@ public class MusicService extends Service implements Player,
         if (!isQueueEmpty()) {
             currentQueuePosition = (--currentQueuePosition + getQueue().size()) % getQueue().size();
 
-            resetPlayer(true);
+            playCurrentSong(true);
         }
     }
 
@@ -414,7 +429,7 @@ public class MusicService extends Service implements Player,
     @Override
     public void playSong(int position) {
         setQueuePosition(position);
-        resetPlayer(true);
+        playCurrentSong(true);
     }
 
     @NonNull

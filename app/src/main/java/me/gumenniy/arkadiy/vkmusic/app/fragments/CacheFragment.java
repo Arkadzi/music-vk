@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.view;
+package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -23,8 +23,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.SongAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.AbstractListAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.CachePresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.SimpleBaseView;

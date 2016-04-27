@@ -1,18 +1,18 @@
-package me.gumenniy.arkadiy.vkmusic.app.injection;
+package me.gumenniy.arkadiy.vkmusic.injection;
 
-import android.content.ContentResolver;
-import android.content.ContextWrapper;
 import android.content.SharedPreferences;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
+import com.squareup.picasso.OkHttpDownloader;
+import com.squareup.picasso.Picasso;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -54,6 +54,7 @@ public class RestClientModule {
     public OkHttpClient provideOkClient() {
         OkHttpClient okClient = new OkHttpClient();
         okClient.setReadTimeout(10, TimeUnit.SECONDS);
+        okClient.setCache(new Cache(app.getCacheDir(), Integer.MAX_VALUE));
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         okClient.interceptors().add(interceptor);
@@ -67,6 +68,12 @@ public class RestClientModule {
         });
 
         return okClient;
+    }
+
+    @Provides
+    @Singleton
+    public Picasso providePicasso(OkHttpClient client) {
+        return new Picasso.Builder(app).downloader(new OkHttpDownloader(client)).build();
     }
 
     @Provides

@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.view;
+package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,9 +28,9 @@ import butterknife.ButterKnife;
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.LoginActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.app.dialogs.ProgressDialogFragment;
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseListPresenter;
 import me.gumenniy.arkadiy.vkmusic.presenter.BaseView;
 import me.gumenniy.arkadiy.vkmusic.presenter.State;

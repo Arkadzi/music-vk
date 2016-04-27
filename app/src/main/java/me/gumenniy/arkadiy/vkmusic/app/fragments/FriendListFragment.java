@@ -1,4 +1,4 @@
-package me.gumenniy.arkadiy.vkmusic.view;
+package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -7,20 +7,19 @@ import android.support.v4.app.Fragment;
 import java.util.ArrayList;
 
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.AbstractListAdapter;
-import me.gumenniy.arkadiy.vkmusic.app.adapter.GroupAdapter;
-import me.gumenniy.arkadiy.vkmusic.app.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.AbstractListAdapter;
+import me.gumenniy.arkadiy.vkmusic.app.adapters.FriendAdapter;
+import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
 import me.gumenniy.arkadiy.vkmusic.model.Friend;
-import me.gumenniy.arkadiy.vkmusic.model.Group;
-import me.gumenniy.arkadiy.vkmusic.presenter.GroupListPresenter;
+import me.gumenniy.arkadiy.vkmusic.presenter.FriendListPresenter;
 
 /**
  * Created by Arkadiy on 07.03.2016.
  */
-public class GroupListFragment extends BaseListFragment<Group, GroupListPresenter> {
+public class FriendListFragment extends BaseListFragment<Friend, FriendListPresenter> {
 
     public static Fragment newInstance(String title) {
-        GroupListFragment fragment = new GroupListFragment();
+        FriendListFragment fragment = new FriendListFragment();
 
         Bundle args = new Bundle();
         args.putString(TITLE, title);
@@ -40,21 +39,21 @@ public class GroupListFragment extends BaseListFragment<Group, GroupListPresente
         component.inject(this);
     }
 
+    @NonNull
     @Override
-    protected AbstractListAdapter<Group> getListAdapter() {
-        return new GroupAdapter(getActivity(), new ArrayList<Group>());
+    protected AbstractListAdapter<Friend> getListAdapter() {
+        return new FriendAdapter(getActivity(), new ArrayList<Friend>());
     }
 
     @Override
-    public void navigateBy(@NonNull Group item) {
-        String groupId = String.format("-%s", item.getId());
-        String title = item.getName();
+    public void navigateBy(@NonNull Friend item) {
+        String userId = String.valueOf(item.getId());
+        String title = String.format("%s %s", item.getFirstName(), item.getLastName());
 
         getFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, SongListFragment.newInstance(groupId, title, false))
+                .replace(R.id.fragment_container, SongListFragment.newInstance(userId, title, false))
                 .addToBackStack(null)
                 .commit();
     }
-
 }
