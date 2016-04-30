@@ -3,6 +3,7 @@ package me.gumenniy.arkadiy.vkmusic.app;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -80,9 +81,9 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     private ArtworkAdapter adapter;
     @Nullable
     private Fragment fragment;
-    private boolean isUserInteraction;
     @Nullable
     private MusicService service;
+    private boolean isUserInteraction;
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -113,28 +114,12 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
         preparePager();
         initSeekBar();
         presenter.bindView(this);
-//        startService();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment == null) {
             startFragment(SongListFragment.newInstance(SongListPresenter.CURRENT_USER, getString(R.string.my_music), false));
             navigationView.setCheckedItem(R.id.my_music_item);
         }
     }
-
-//    private void check() {
-//        Log.e("aaaaaa",getCacheDir() + " " + getFilesDir());
-//        try {
-//
-//            File file = new File(getExternalCacheDir() + File.separator + "asd");
-//            FileOutputStream os = new FileOutputStream(file);
-//            String word = "word";
-//            for (char c : word.toCharArray())
-//            os.write(c);
-//            os.close();
-//        } catch (Exception e) {
-//            Log.e("exception", String.valueOf(e));
-//        }
-//    }
 
     private void preparePager() {
         adapter = new ArtworkAdapter(this, presenter);
@@ -388,6 +373,17 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
     public void setBufferProgress(int percent, int progress) {
         seekBar.setSecondaryProgress(seekBar.getMax() * percent / 100);
         seekBar.setProgress(progress);
+    }
+
+    @Override
+    public void renderImage(@NonNull Song song, @NonNull Bitmap bitmap) {
+        for (int i = 0; i < pager.getChildCount(); i++) {
+            View child = pager.getChildAt(i);
+            String tag = (String) child.getTag();
+            if (song.getKey().equals(tag)) {
+                adapter.updateView(child, bitmap);
+            }
+        }
     }
 
     @Override

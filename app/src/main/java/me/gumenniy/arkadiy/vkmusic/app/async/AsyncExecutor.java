@@ -8,12 +8,12 @@ import android.util.Log;
 /**
  * Created by Arkadiy on 06.04.2016.
  */
-public class PlayerExecutor extends HandlerThread {
+public class AsyncExecutor extends HandlerThread {
 
     private Handler workerHandler;
 
-    public PlayerExecutor() {
-        super("player");
+    public AsyncExecutor(String name) {
+        super(name);
     }
 
     public void postTask(int what, Runnable workTask, boolean removeWhats, boolean postAtFront) {

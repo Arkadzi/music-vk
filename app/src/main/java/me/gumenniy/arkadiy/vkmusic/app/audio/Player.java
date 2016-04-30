@@ -2,6 +2,7 @@ package me.gumenniy.arkadiy.vkmusic.app.audio;
 
 
 
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -31,7 +32,10 @@ public interface Player {
     Song getCurrentSong();
     void playSong(int position);
     @Nullable
-    String loadImageUrl(@NonNull Song song);
+    Bitmap getImageBitmap(@NonNull Song song);
+    @Nullable
+    String getImageUrl(@NonNull Song item);
+
     boolean isShouldStart();
 
     interface PlayerListener {
@@ -41,6 +45,7 @@ public interface Player {
         void onError(@NonNull Song song);
         void onQueueChanged(@NonNull List<Song> queue);
         void onSongBuffering(int bufferedPercent, int progress);
-        void onImageLoaded(@NonNull Song song, @NonNull String url);
+        void onImageLoaded(@NonNull Song song, @NonNull Bitmap bitmap);
+        void onUrlLoaded(@NonNull Song song, @NonNull String url);
     }
 }

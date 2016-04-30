@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
@@ -95,6 +96,9 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
                         showMessage(String.valueOf(t));
                     }
                 });
+                break;
+            case Load:
+                eventBus.post(new StartLoadingEvent(song));
                 break;
         }
     }

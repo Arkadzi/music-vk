@@ -1,6 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.app.fragments;
 
 
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 
 import java.util.List;
@@ -19,5 +20,6 @@ public interface PlaybackView {
 
     void setBufferProgress(int percent, int progress);
 
+    void renderImage(@NonNull Song song, @NonNull Bitmap bitmap);
     void renderImage(@NonNull Song song, @NonNull String url);
 }

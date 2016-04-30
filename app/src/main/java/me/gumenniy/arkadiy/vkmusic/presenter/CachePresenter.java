@@ -3,7 +3,9 @@ package me.gumenniy.arkadiy.vkmusic.presenter;
 import android.support.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -13,6 +15,7 @@ import me.gumenniy.arkadiy.vkmusic.model.LocalCache;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.model.SongCache;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.SongLoadedEvent;
 
 /**
  * Created by Arkadiy on 22.04.2016.
@@ -21,7 +24,7 @@ import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
 public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, LocalCache.OnDataLoadedListener<Song> {
     private final EventBus eventBus;
     private final SongCache cache;
-    public List<Song> data;
+    public final List<Song> data = new ArrayList<>();
     @Nullable
     private SimpleBaseView<Song> view;
     private State state;
@@ -30,7 +33,8 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
     public CachePresenter(EventBus eventBus, SongCache cache) {
         this.eventBus = eventBus;
         this.cache = cache;
-        state = State.STATE_FIRST_BIND;
+        reset();
+        eventBus.register(this);
     }
 
     @Override
@@ -39,7 +43,7 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
         if (view != null) {
             switch (state) {
                 case STATE_FIRST_BIND:
-                    startLoad(State.STATE_FIRST_LOAD);
+                    startLoad();
                     break;
                 case STATE_IDLE:
                     onLoadingStop(data);
@@ -56,7 +60,7 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
         eventBus.post(new PlayQueueEvent(data, position, true));
     }
 
-    private void startLoad(State stateFirstLoad) {
+    private void startLoad() {
         state = State.STATE_FIRST_LOAD;
         if (view != null) {
             view.showProgress(state);
@@ -66,10 +70,10 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
 
     @Override
     public void onDataLoaded(List<Song> data) {
-        this.data = data;
+        this.data.clear();
+        this.data.addAll(data);
         onLoadingStop(data);
         state = State.STATE_IDLE;
-
     }
 
     private void onLoadingStop(List<Song> data) {
@@ -77,5 +81,18 @@ public class CachePresenter implements BasePresenter<SimpleBaseView<Song>>, Loca
             view.renderData(data);
             view.hideProgress();
         }
+    }
+
+    @Subscribe
+    public void onSongLoadedEvent(SongLoadedEvent event) {
+        reset();
+        if (view != null) {
+            startLoad();
+        }
+    }
+
+    private void reset() {
+        state = State.STATE_FIRST_BIND;
+        data.clear();
     }
 }

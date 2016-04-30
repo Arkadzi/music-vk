@@ -3,7 +3,6 @@ package me.gumenniy.arkadiy.vkmusic.app;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -14,29 +13,22 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
-
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 
-import me.gumenniy.arkadiy.vkmusic.app.async.PlayerExecutor;
+import me.gumenniy.arkadiy.vkmusic.app.async.AsyncExecutor;
+import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
 import me.gumenniy.arkadiy.vkmusic.app.audio.ForegroundManager;
 import me.gumenniy.arkadiy.vkmusic.app.audio.Player;
-import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
-import me.gumenniy.arkadiy.vkmusic.rest.LastFMApi;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
-import retrofit.Call;
-import retrofit.Response;
 
 /**
  * Created by Arkadiy on 18.03.2016.
@@ -45,51 +37,39 @@ public class MusicService extends Service implements Player,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener,
         MediaPlayer.OnErrorListener,
-        MediaPlayer.OnBufferingUpdateListener {
+        MediaPlayer.OnBufferingUpdateListener, ImageLoader.OnImageLoadedListener {
 
 
-    public static final String NONE = "none";
     private static final int BUFFER_LOOP_MAX_COUNT = 100;
     private static final int RESET = 1;
-    private static final int LOAD = 2;
+
     private final IBinder musicBind = new MusicBinder();
+    private final List<Song> queue = new ArrayList<>();
     @Inject
     EventBus eventBus;
     @Inject
-    LastFMApi artworkApi;
-    @Inject
-    Picasso picasso;
-    //error calculating
-    private int bufferLoopedCount;
-    private int prevPercent;
+    ImageLoader imageLoader;
 
-    //music execution
-    private MediaPlayer player;
-    @NonNull
-    private List<Song> queue;
-    private Map<String, String> images;
-    private int currentQueuePosition;
     @Nullable
     private PlayerListener playerListener;
+    private AsyncExecutor playerExecutor;
+    private Handler handler;
+    private MediaPlayer player;
+    private ForegroundManager foregroundManager;
+
+    private int bufferLoopedCount;
+    private int prevPercent;
+    private int currentQueuePosition;
+    private int savedPosition;
+
     private boolean isPrepared;
     private boolean shouldStart;
-    private int savedPosition;
-    private PlayerExecutor playerExecutor;
-    private Handler handler;
     private boolean localStoragePlayback;
-    private ForegroundManager foregroundManager;
-    private Runnable bufferUpdating = new Runnable() {
+
+    private Runnable songProgressUpdate = new Runnable() {
         @Override
         public void run() {
-            int currentSongPosition = 0;
-            if (playerListener != null && isPrepared()) {
-                currentSongPosition = getCurrentSongPosition();
-                playerListener.onSongBuffering(0, currentSongPosition);
-            }
-            int delayMillis = 1000 - (currentSongPosition % 1000);
-            Log.e("update", (playerListener != null && isPrepared()) + " " + currentSongPosition / 1000 + " delayMillis " + delayMillis);
-
-            handler.postDelayed(this, delayMillis);
+            notifySongProgress();
         }
     };
 
@@ -99,9 +79,7 @@ public class MusicService extends Service implements Player,
         (MusicApplication.getApp(this)).getComponent().inject(this);
         eventBus.register(this);
         preparePlayerExecutor();
-        setQueue(new ArrayList<Song>());
-        images = new HashMap<>();
-        foregroundManager = new ForegroundManager(this, images);
+        foregroundManager = new ForegroundManager(this, imageLoader);
         initMediaPlayer();
     }
 
@@ -127,20 +105,16 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        Log.e("play", "prepared ");
         isPrepared = true;
         seekTo(savedPosition);
         if (isShouldStart()) {
             start();
         }
-        if (getImageUrl(getCurrentSong()) == null) {
-            loadImageUrlAsync(getCurrentSong());
-        }
+        loadImageUrlAsync(getCurrentSong());
     }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Log.e("player", "complete ");
         next();
     }
 
@@ -201,72 +175,38 @@ public class MusicService extends Service implements Player,
         }
     }
 
-    @Nullable
-    @Override
-    public String loadImageUrl(@NonNull Song song) {
-        String url = getImageUrl(song);
-        if (url != null && !url.equals(NONE)) {
-            return url;
-        }
-        return null;
-    }
-
     private void loadImageUrlAsync(final Song song) {
-        playerExecutor.postTask(LOAD, new Runnable() {
-
-            @Override
-            public void run() {
-                final String url = requestArtworkUrl(song);
-
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        handleLoadedUrl(song, url);
-                    }
-                });
-            }
-        }, true, false);
+        imageLoader.loadArtwork(song, !localStoragePlayback);
     }
 
-    private String requestArtworkUrl(Song song) {
-        String result = null;
-        try {
-            Log.e("play", "image " + song.getTitle());
-            Call<Artwork> artworkCall = artworkApi.getArtwork2(Settings.LAST_FM_API_KEY, song.getArtist(), song.getTitle());
-            Response<Artwork> artworkResponse = artworkCall.execute();
-            if (artworkResponse.isSuccess()) {
-                Artwork artwork = artworkResponse.body();
-                result = artwork.getUri();
-            }
-        } catch (NullPointerException npe) {
-            Log.e("npexception", song.getTitle() + " " + String.valueOf(npe));
-            result = "";
-        } catch (Exception e) {
-            Log.e("exception", song.getTitle() + " " + String.valueOf(e));
-        }
-        return result;
-    }
-
-    private void handleLoadedUrl(Song song, String url) {
-        Log.e("play", "image loaded " + song.getTitle());
-        if (url != null) {
-            if (url.isEmpty()) {
-                putImageUri(song, NONE);
-            } else {
-                putImageUri(song, url);
-                notifyImageLoaded(song, url);
-
-                Song currSong = getCurrentSong();
-                if (song.equals(currSong)) {
-                    foregroundManager.updateRemoteView(song, isPlaying());
-                }
-            }
+    @Override
+    public void onImageLoaded(Song song, @Nullable Bitmap bitmap) {
+        notifyImageLoaded(song, bitmap);
+        Song currSong = getCurrentSong();
+        if (song.equals(currSong)) {
+            foregroundManager.updateRemoteView(song, isPlaying());
         }
     }
 
-    private void notifyImageLoaded(Song song, String url) {
+    @Override
+    public void onUrlLoaded(Song song, String url) {
+        notifyUrlLoaded(song, url);
+        Song currSong = getCurrentSong();
+        if (song.equals(currSong)) {
+            foregroundManager.updateRemoteView(song, isPlaying());
+        }
+
+    }
+
+    private void notifyImageLoaded(Song song, Bitmap bitmap) {
         if (playerListener != null) {
-            playerListener.onImageLoaded(song, url);
+            playerListener.onImageLoaded(song, bitmap);
+        }
+    }
+
+    private void notifyUrlLoaded(Song song, String url) {
+        if (playerListener != null) {
+            playerListener.onUrlLoaded(song, url);
         }
     }
 
@@ -313,24 +253,43 @@ public class MusicService extends Service implements Player,
 
     private void preparePlayerExecutor() {
         handler = new Handler();
-        playerExecutor = new PlayerExecutor();
+        playerExecutor = new AsyncExecutor("player");
         playerExecutor.start();
         playerExecutor.prepareHandler();
+        imageLoader.setListener(this);
     }
 
     private void quitPlayerExecutor() {
         playerExecutor.quit();
+        imageLoader.abandon();
     }
 
     private void startUpdatingSongBuffering() {
         stopUpdatingSongBuffering();
         if (localStoragePlayback) {
-            bufferUpdating.run();
+            songProgressUpdate.run();
         }
     }
 
+    @Subscribe
+    public void onStartLoadingEvent(StartLoadingEvent event) {
+        LoadService.startActionLoad(this, event.song);
+    }
+
     private void stopUpdatingSongBuffering() {
-        handler.removeCallbacks(bufferUpdating);
+        handler.removeCallbacks(songProgressUpdate);
+    }
+
+    private void notifySongProgress() {
+        int currentSongPosition = 0;
+        if (playerListener != null && isPrepared()) {
+            currentSongPosition = getCurrentSongPosition();
+            playerListener.onSongBuffering(0, currentSongPosition);
+        }
+        int delayMillis = 1000 - (currentSongPosition % 1000);
+        Log.e("update",  "delayMillis " + delayMillis);
+
+        handler.postDelayed(songProgressUpdate, delayMillis);
     }
 
     @Override
@@ -386,7 +345,7 @@ public class MusicService extends Service implements Player,
         playerListener = listener;
         if (listener == null) {
             stopUpdatingSongBuffering();
-        } else {
+        } else if (isPlaying()) {
             startUpdatingSongBuffering();
         }
     }
@@ -432,6 +391,18 @@ public class MusicService extends Service implements Player,
         playCurrentSong(true);
     }
 
+    @Nullable
+    @Override
+    public Bitmap getImageBitmap(@NonNull Song song) {
+        return imageLoader.getImageBitmap(song.getKey());
+    }
+
+    @Nullable
+    @Override
+    public String getImageUrl(@NonNull Song song) {
+        return imageLoader.getImageUrl(song.getKey());
+    }
+
     @NonNull
     @Override
     public List<Song> getQueue() {
@@ -439,7 +410,8 @@ public class MusicService extends Service implements Player,
     }
 
     public void setQueue(@NonNull List<Song> queue) {
-        this.queue = queue;
+        this.queue.clear();
+        this.queue.addAll(queue);
     }
 
     @Override
@@ -469,15 +441,6 @@ public class MusicService extends Service implements Player,
     @Override
     public IBinder onBind(Intent intent) {
         return musicBind;
-    }
-
-    @Nullable
-    private String getImageUrl(Song song) {
-        return images.get(song.getKey());
-    }
-
-    private void putImageUri(@NonNull Song song, @NonNull String url) {
-        images.put(song.getKey(), url);
     }
 
     @Override

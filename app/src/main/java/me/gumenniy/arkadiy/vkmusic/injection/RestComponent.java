@@ -3,6 +3,7 @@ package me.gumenniy.arkadiy.vkmusic.injection;
 import javax.inject.Singleton;
 
 import dagger.Component;
+import me.gumenniy.arkadiy.vkmusic.app.LoadService;
 import me.gumenniy.arkadiy.vkmusic.app.LoginActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicService;
@@ -41,4 +42,5 @@ public interface RestComponent {
 
     void inject(MusicService musicService);
 
+    void inject(LoadService loadService);
 }

@@ -1,6 +1,7 @@
 package me.gumenniy.arkadiy.vkmusic.injection;
 
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -24,6 +25,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
+import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
 import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.SongCache;
@@ -73,7 +75,15 @@ public class RestClientModule {
     @Provides
     @Singleton
     public Picasso providePicasso(OkHttpClient client) {
-        return new Picasso.Builder(app).downloader(new OkHttpDownloader(client)).build();
+        return new Picasso.Builder(app)
+//                .downloader(new OkHttpDownloader(client))
+                .defaultBitmapConfig(Bitmap.Config.RGB_565)
+                .build();
+    }
+
+    @Provides
+    public ImageLoader provideImageLoader(LastFMApi api) {
+        return new ImageLoader(api);
     }
 
     @Provides

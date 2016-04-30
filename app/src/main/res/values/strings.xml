@@ -21,6 +21,11 @@
     <string name="only_performer">Only performer</string>
     <string name="pleaseWait">Please, wait...</string>
     <string name="songAdded">Song is added to My Music</string>
+    <string name="downloadInProgress">Download in progress</string>
+    <string name="downloadComplete">Download complete</string>
+    <string name="errorOccured">Error occured</string>
+    <string name="downloadPreparing">Download preparing</string>
+    <string name="unableToLoad">Unable to load</string>
     <string-array name="genres" >
         <item>All</item>
         <item>Rock</item>
@@ -73,9 +78,11 @@
 
     <string-array name="menu_song_new">
         <item>Add to My Music</item>
+        <item>Save</item>
     </string-array>
 
     <string-array name="menu_song_user">
         <item>Remove from My Music</item>
+        <item>Save</item>
     </string-array>
 </resources>

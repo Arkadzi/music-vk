@@ -1,5 +1,6 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -128,7 +129,14 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     }
 
     @Override
-    public void onImageLoaded(@NonNull Song song, @NonNull String url) {
+    public void onImageLoaded(@NonNull Song song, @NonNull Bitmap bitmap) {
+        if (view != null) {
+            view.renderImage(song, bitmap);
+        }
+    }
+
+    @Override
+    public void onUrlLoaded(@NonNull Song song, @NonNull String url) {
         if (view != null) {
             view.renderImage(song, url);
         }
@@ -142,14 +150,21 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     }
 
     @Nullable
-    public String askUrl(Song item) {
+    public Bitmap askBitmap(Song item) {
         if (player != null) {
-            return player.loadImageUrl(item);
+            return player.getImageBitmap(item);
         }
         return null;
     }
 
     public void onStartTracking() {
         shouldUpdateProgress = false;
+    }
+
+    public String askUrl(Song item) {
+        if (player != null) {
+            return player.getImageUrl(item);
+        }
+        return null;
     }
 }

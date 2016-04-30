@@ -76,30 +76,32 @@ public class SongListPresenter extends BaseListPresenter<Song> {
                 showProgressDialog();
                 break;
         }
-        vkAddRemoveResultCall.enqueue(new Callback<VKAddRemoveResult>() {
-            @Override
-            public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
-                dismissProgressDialog();
-                VKAddRemoveResult body = response.body();
-                if (!response.isSuccess() || !body.isSuccessful()) {
-                    showMessage(body.getError().getErrorMessage());
-                } else if (which == Settings.Menu.Delete && song == getData().get(position)) {
-                    getData().remove(position);
-                    BaseView<Song> view = getView();
-                    if (view != null) {
-                        view.renderData(getData());
-                    }
-                } else if (which == Settings.Menu.Add) {
-                    showMessage("added");
-                }
-            }
 
-            @Override
-            public void onFailure(Throwable t) {
-//                dismissProgressDialog();
-                showMessage(String.valueOf(t));
-            }
-        });
+        if (vkAddRemoveResultCall != null) {
+            vkAddRemoveResultCall.enqueue(new Callback<VKAddRemoveResult>() {
+                @Override
+                public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
+                    dismissProgressDialog();
+                    VKAddRemoveResult body = response.body();
+                    if (!response.isSuccess() || !body.isSuccessful()) {
+                        showMessage(body.getError().getErrorMessage());
+                    } else if (which == Settings.Menu.Delete && song == getData().get(position)) {
+                        getData().remove(position);
+                        BaseView<Song> view = getView();
+                        if (view != null) {
+                            view.renderData(getData());
+                        }
+                    } else if (which == Settings.Menu.Add) {
+                        showMessage("added");
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    showMessage(String.valueOf(t));
+                }
+            });
+        }
     }
 
     private void handleNotUserSongMenu(int which, Song song) {

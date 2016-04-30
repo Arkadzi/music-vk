@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,14 +18,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.http.Url;
 
 /**
  * Created by Arkadiy on 22.04.2016.
  */
 public class SongCache implements LocalCache<Song> {
-    private final String connectionName = "connections.txt";
-    private final String folderName = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).toString();
     private final Context context;
     private CacheLoader loader;
 
@@ -49,15 +49,21 @@ public class SongCache implements LocalCache<Song> {
         @Override
         protected List<Song> doInBackground(final Void... params) {
             final List<Song> result = new ArrayList<>();
-
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             final Map<String, String[]> connections = getConnections();
             final Set<String> keySet = connections.keySet();
 
-            File folder = new File(folderName);
+            File folder = new File(Settings.CACHE_DIRECTORY);
+            Log.e("Async", String.valueOf(keySet));
             folder.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File pathname) {
                     String fileName = pathname.getName();
+                    Log.e("Async", fileName);
                     if (!pathname.isDirectory() && keySet.contains(fileName)) {
                         String title = connections.get(fileName)[0];
                         String artist = connections.get(fileName)[1];
@@ -77,17 +83,19 @@ public class SongCache implements LocalCache<Song> {
 
         private Map<String, String[]> getConnections() {
             Map<String, String[]> connections = new HashMap<>();
-            File connectionFile = new File(String.format("%s%s%s", folderName, File.separator, connectionName));
+            File connectionFile = new File(Settings.CONNECTIONS_FILE);
             BufferedReader reader = null;
             try {
                 reader = new BufferedReader(new FileReader(connectionFile));
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    Log.e("Async", line);
                     String[] pair = line.split("\\|");
                     if (pair.length == 4) {
                         connections.put(pair[0], Arrays.copyOfRange(pair, 1, pair.length));
                     }
                 }
+                Log.e("Async", String.valueOf(connections));
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {

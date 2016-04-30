@@ -6,9 +6,11 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.squareup.picasso.Picasso;
@@ -18,22 +20,23 @@ import java.util.Map;
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicService;
+import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
 public class ForegroundManager {
     private final Service c;
-//    private final int remoteSize;
-//    private final int expandedSize;
-    private final Map<String, String> imageUrls;
+    private final ImageLoader imageUrls;
+    private final int remoteSize;
+    private final int expandedSize;
     private boolean isForeground;
 
-    public ForegroundManager(@NonNull Service c, @NonNull Map<String, String> images) {
+    public ForegroundManager(@NonNull Service c, @NonNull ImageLoader images) {
         this.c = c;
         this.imageUrls = images;
-//        float density = c.getResources().getDisplayMetrics().density;
-//        remoteSize = (int) (density * 64);
-//        expandedSize = (int) (density * 128);
+        float density = c.getResources().getDisplayMetrics().density;
+        remoteSize = (int) (density * 64);
+        expandedSize = (int) (density * 128);
     }
 
     public void beginForeground(@NonNull Song song, boolean isPlaying) {
@@ -59,7 +62,6 @@ public class ForegroundManager {
 
     @NonNull
     public Notification getNotification(@NonNull Song song, boolean isPlaying) {
-
         Intent resultIntent = new Intent(c, MainActivity.class);
         PendingIntent resultPendingIntent = PendingIntent.getActivity(c, 0, resultIntent, 0);
 
@@ -90,8 +92,11 @@ public class ForegroundManager {
         remoteViews.setTextViewText(R.id.notification_title, song.getTitle());
         final Notification notification = builder.build();
 
-        String url = imageUrls.get(song.getKey());
-        if (url != null && !url.equals(MusicService.NONE)) {
+        String url = imageUrls.getImageUrl(song.getKey());
+        Bitmap bitmap = imageUrls.getImageBitmap(song.getKey());
+        if (bitmap != null) {
+            remoteViews.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, remoteSize, remoteSize, false));
+        } else if (url != null) {
             Picasso.with(c)
                     .load(url)
                     .into(remoteViews, R.id.album_art, Settings.Notification.FOREGROUND_SERVICE, notification);
@@ -103,7 +108,9 @@ public class ForegroundManager {
             final RemoteViews expandedView = new RemoteViews(c.getPackageName(), R.layout.notification_expanded);
             notification.bigContentView = expandedView;
 
-            if (url != null && !url.equals(MusicService.NONE)) {
+            if (bitmap != null) {
+                expandedView.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, expandedSize, expandedSize, false));
+            } else if (url != null) {
                 Picasso.with(c)
                         .load(url)
                         .into(expandedView, R.id.album_art, Settings.Notification.FOREGROUND_SERVICE, notification);
