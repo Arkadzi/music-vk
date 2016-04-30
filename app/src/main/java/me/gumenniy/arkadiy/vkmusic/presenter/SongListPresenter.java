@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.AccessDeniedEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
@@ -75,6 +76,9 @@ public class SongListPresenter extends BaseListPresenter<Song> {
                 vkAddRemoveResultCall = getVkApi().deleteSong(song.getId(), song.getOwnerId(), user.getToken());
                 showProgressDialog();
                 break;
+            case Load:
+                eventBus.post(new StartLoadingEvent(song));
+                break;
         }
 
         if (vkAddRemoveResultCall != null) {
@@ -101,28 +105,6 @@ public class SongListPresenter extends BaseListPresenter<Song> {
                     showMessage(String.valueOf(t));
                 }
             });
-        }
-    }
-
-    private void handleNotUserSongMenu(int which, Song song) {
-        switch (which) {
-            case 0:
-                UserSession user = getUser();
-                getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken()).enqueue(new Callback<VKAddRemoveResult>() {
-                    @Override
-                    public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
-                        VKAddRemoveResult body = response.body();
-                        if (!response.isSuccess() || !body.isSuccessful()) {
-                            showMessage(body.getError().getErrorMessage());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        showMessage(String.valueOf(t));
-                    }
-                });
-                break;
         }
     }
 

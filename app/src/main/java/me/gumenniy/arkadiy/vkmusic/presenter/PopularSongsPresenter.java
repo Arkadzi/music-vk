@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.PlayQueueEvent;
+import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
@@ -69,6 +70,9 @@ public class PopularSongsPresenter extends BaseListPresenter<Song> implements Me
                         showMessage(String.valueOf(t));
                     }
                 });
+                break;
+            case Load:
+                eventBus.post(new StartLoadingEvent(song));
                 break;
         }
     }

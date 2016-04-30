@@ -93,9 +93,10 @@ public class ImageLoader {
         Bitmap result = null;
         if (bitmap != null) {
             Bitmap byteBitmap = BitmapFactory.decodeByteArray(bitmap, 0, bitmap.length);
-            result = Bitmap.createScaledBitmap(byteBitmap, 300, 300, false);
-            byteBitmap.recycle();
-
+            if (byteBitmap != null) {
+                result = Bitmap.createScaledBitmap(byteBitmap, 300, 300, false);
+                byteBitmap.recycle();
+            }
         }
         return result;
     }

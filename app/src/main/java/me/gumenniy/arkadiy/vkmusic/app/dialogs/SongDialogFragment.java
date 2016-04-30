@@ -58,9 +58,23 @@ public class SongDialogFragment extends DialogFragment {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (currentUserList) {
-                    presenter.handleMenuClick(Settings.Menu.Delete, song, position);
+                    switch (which) {
+                        case 0:
+                            presenter.handleMenuClick(Settings.Menu.Delete, song, position);
+                            break;
+                        case 1:
+                            presenter.handleMenuClick(Settings.Menu.Load, song, position);
+                            break;
+                    }
                 } else {
-                    presenter.handleMenuClick(Settings.Menu.Add, song, position);
+                    switch (which) {
+                        case 0:
+                            presenter.handleMenuClick(Settings.Menu.Add, song, position);
+                            break;
+                        case 1:
+                            presenter.handleMenuClick(Settings.Menu.Load, song, position);
+                            break;
+                    }
                 }
             }
         });

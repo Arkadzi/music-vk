@@ -56,7 +56,14 @@ public class PopularSongDialogFragment extends DialogFragment {
         builder.setItems(R.array.menu_song_new, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                presenter.handleMenuClick(Settings.Menu.Add, song, position);
+                switch (which) {
+                    case 0:
+                        presenter.handleMenuClick(Settings.Menu.Add, song, position);
+                        break;
+                    case 1:
+                        presenter.handleMenuClick(Settings.Menu.Load, song, position);
+                        break;
+                }
             }
         });
         return builder.create();

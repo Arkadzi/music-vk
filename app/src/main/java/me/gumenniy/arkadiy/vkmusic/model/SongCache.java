@@ -49,11 +49,7 @@ public class SongCache implements LocalCache<Song> {
         @Override
         protected List<Song> doInBackground(final Void... params) {
             final List<Song> result = new ArrayList<>();
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             final Map<String, String[]> connections = getConnections();
             final Set<String> keySet = connections.keySet();
 
