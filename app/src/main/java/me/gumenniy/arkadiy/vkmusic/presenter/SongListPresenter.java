@@ -71,6 +71,7 @@ public class SongListPresenter extends BaseListPresenter<Song> {
         switch (which) {
             case Add:
                 vkAddRemoveResultCall = getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken());
+                showProgressDialog();
                 break;
             case Delete:
                 vkAddRemoveResultCall = getVkApi().deleteSong(song.getId(), song.getOwnerId(), user.getToken());
@@ -102,6 +103,7 @@ public class SongListPresenter extends BaseListPresenter<Song> {
 
                 @Override
                 public void onFailure(Throwable t) {
+                    dismissProgressDialog();
                     showMessage(String.valueOf(t));
                 }
             });

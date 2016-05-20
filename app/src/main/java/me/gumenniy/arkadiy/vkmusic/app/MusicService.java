@@ -121,7 +121,6 @@ public class MusicService extends Service implements Player,
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.e("player", "error " + what + " " + extra);
         if (playerListener != null) {
             Song currentSong = getCurrentSong();
             if (currentSong != null)
@@ -134,7 +133,7 @@ public class MusicService extends Service implements Player,
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        if (!isPrepared() && (prevPercent == percent && percent != 100)) {
+        if (!isPrepared && (prevPercent == percent && percent != 100)) {
             bufferLoopedCount++;
             if (bufferLoopedCount > BUFFER_LOOP_MAX_COUNT) {
                 playCurrentSong(false);
@@ -150,7 +149,7 @@ public class MusicService extends Service implements Player,
 
     private void notifySongBuffering(int percent) {
         if (playerListener != null) {
-            playerListener.onSongBuffering(percent, player.getCurrentPosition());
+            playerListener.onSongBuffering(percent, getCurrentSongPosition());
         }
     }
 
@@ -287,7 +286,6 @@ public class MusicService extends Service implements Player,
             playerListener.onSongBuffering(0, currentSongPosition);
         }
         int delayMillis = 1000 - (currentSongPosition % 1000);
-        Log.e("update",  "delayMillis " + delayMillis);
 
         handler.postDelayed(songProgressUpdate, delayMillis);
     }

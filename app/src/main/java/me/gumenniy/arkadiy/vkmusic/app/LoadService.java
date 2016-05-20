@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
 
 import javax.inject.Inject;
@@ -82,63 +83,79 @@ public class LoadService extends IntentService {
         File folder = new File(Settings.CACHE_DIRECTORY);
         folder.mkdir();
 
+        int totalRead = 0;
         URL url;
         BufferedInputStream is = null;
         BufferedOutputStream os = null;
         HttpURLConnection urlConnection = null;
         NotificationCompat.Builder builder = createBuilder(song);
-        try {
-            url = new URL(song.getUrl());
-            showMessage(builder, R.string.downloadPreparing);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.connect();
-            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                String fileName = String.valueOf(System.currentTimeMillis());
-                File file = new File(folder + File.separator + fileName);
-                Log.e("Async", String.valueOf(file));
-                int fileSize = urlConnection.getContentLength();
-                is = new BufferedInputStream(urlConnection.getInputStream());
-                os = new BufferedOutputStream(new FileOutputStream(file));
-                addRecord(fileName, song);
-                byte[] buffer = new byte[1024];
-                int byteRead;
-                int totalRead = 0;
-                int percent = -1;
-                while ((byteRead = is.read(buffer)) > 0) {
-                    os.write(buffer, 0, byteRead);
-                    totalRead += byteRead;
-                    percent = updateProgress(builder, fileSize, totalRead, percent);
-                }
-                Log.e("Async", "loaded ");
-                showMessage(builder, R.string.downloadComplete);
-                is.close();
-                os.close();
-
-            }
-        } catch (MalformedURLException me) {
-            showToast(getString(R.string.unableToLoad) + " " + song.getTitle());
-            Log.e("Async", "exception " + String.valueOf(me));
-        } catch (IOException e) {
-            showMessage(builder, R.string.errorOccured);
-            Log.e("Async", "exception " + String.valueOf(e));
-        } finally {
+        boolean isLoading = true;
+        File file = null;
+        String fileName = String.valueOf(System.currentTimeMillis());
+        while (isLoading) {
             try {
-                if (os != null)
-                    os.close();
-                if (is != null)
-                    is.close();
-            } catch (IOException ignored) {
-            }
+                url = new URL(song.getUrl());
+                showMessage(builder, R.string.downloadPreparing);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.connect();
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
-            if (urlConnection != null)
-                urlConnection.disconnect();
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    eventBus.post(new SongLoadedEvent());
+                    Log.e("Async", String.valueOf(file));
+                    int fileSize = urlConnection.getContentLength();
+                    is = new BufferedInputStream(urlConnection.getInputStream());
+                    if (file == null) {
+                        file = new File(folder + File.separator + fileName);
+                        addRecord(fileName, song);
+                    }
+                    os = new BufferedOutputStream(new FileOutputStream(file));
+                    byte[] buffer = new byte[1024];
+                    int byteRead;
+                    int percent = -1;
+                    while ((byteRead = is.read(buffer)) > 0) {
+                        os.write(buffer, 0, byteRead);
+                        totalRead += byteRead;
+                        percent = updateProgress(builder, fileSize, totalRead, percent);
+                    }
+                    Log.e("Async", "loaded ");
+                    showMessage(builder, R.string.downloadComplete);
+                    is.close();
+                    os.close();
+
                 }
-            });
+                isLoading = false;
+            } catch (MalformedURLException me) {
+                showToast(getString(R.string.unableToLoad) + " " + song.getTitle());
+                Log.e("Async", "exception " + String.valueOf(me));
+                isLoading = false;
+            } catch (SocketException se) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                showMessage(builder, R.string.errorOccured);
+                Log.e("Async", "exception " + String.valueOf(e));
+                isLoading = false;
+            } finally {
+                try {
+                    if (os != null)
+                        os.close();
+                    if (is != null)
+                        is.close();
+                } catch (IOException ignored) {
+                }
+
+                if (urlConnection != null)
+                    urlConnection.disconnect();
+            }
         }
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                eventBus.post(new SongLoadedEvent());
+            }
+        });
     }
 
     private void showToast(final String message) {

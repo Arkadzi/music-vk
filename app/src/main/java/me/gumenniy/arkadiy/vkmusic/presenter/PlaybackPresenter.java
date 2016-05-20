@@ -91,6 +91,7 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
     public void onBeginPreparingSong(int position, @NonNull Song song, boolean shouldStart) {
         if (view != null) {
             view.renderSong(position, song);
+            view.setBufferProgress(0, 0);
             view.updatePlaybackButtonImage(shouldStart);
         }
     }

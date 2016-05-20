@@ -1,5 +1,6 @@
 package me.gumenniy.arkadiy.vkmusic.app.async;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -29,6 +30,7 @@ public class ImageLoader {
     private final HashMap<String, String> urls = new HashMap<>();
     private final Set<String> imageless = new HashSet<>();
     private final Handler handler = new Handler();
+    private final int size;
 
     private LastFMApi lastFMApi;
     private OnImageLoadedListener listener;
@@ -36,10 +38,12 @@ public class ImageLoader {
     private LruCache<String, Bitmap> cache;
     private AsyncExecutor downloader;
 
-    public ImageLoader(LastFMApi lastFMApi) {
+    public ImageLoader(LastFMApi lastFMApi, Context context) {
         this.lastFMApi = lastFMApi;
+
         initCache();
         initDownloader();
+        size = context.getResources().getDisplayMetrics().widthPixels;
     }
 
     public void abandon() {
@@ -89,14 +93,64 @@ public class ImageLoader {
 
     private Bitmap retrieveAudioStreamMetadata(final Song song) {
         retriever.setDataSource(song.getUrl(), new HashMap<String, String>());
-        byte[] bitmap = retriever.getEmbeddedPicture();
+        byte[] byteBitmap = retriever.getEmbeddedPicture();
         Bitmap result = null;
-        if (bitmap != null) {
-            Bitmap byteBitmap = BitmapFactory.decodeByteArray(bitmap, 0, bitmap.length);
-            if (byteBitmap != null) {
-                result = Bitmap.createScaledBitmap(byteBitmap, 300, 300, false);
-                byteBitmap.recycle();
+        if (byteBitmap != null) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(byteBitmap, 0, byteBitmap.length, options);
+            options.inSampleSize = calculateInSampleSize(options, size, size);
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            result = BitmapFactory.decodeByteArray(byteBitmap, 0, byteBitmap.length, options);
+            if (result != null) {
+                Log.e("bitmap", String.format("%d %d", result.getWidth(), result.getHeight()));
             }
+//
+//            if (result != null) {
+//                Log.e("bitmap", String.format("%d %d", result.getWidth(), result.getHeight()));
+////                result = resizeBitmap(result);
+//            }
+        }
+        return result;
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    private Bitmap resizeBitmap(Bitmap bitmap) {
+        Bitmap result = bitmap;
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        Log.e("bitmap", String.format("%d %d", width, height));
+        int max = width > height ? width : height;
+        if (max > size) {
+            width = (width * size) / max;
+            height = (height * size) / max;
+            result = Bitmap.createScaledBitmap(bitmap, width, height, false);
+            Log.e("bitmap", String.format("%d %d", width, height));
+            bitmap.recycle();
         }
         return result;
     }

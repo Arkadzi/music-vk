@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
             isUserInteraction = false;
             pager.setCurrentItem(position);
         }
-        setBufferProgress(0, 0);
+//        setBufferProgress(0, 0);
         enableControlPanel();
     }
 

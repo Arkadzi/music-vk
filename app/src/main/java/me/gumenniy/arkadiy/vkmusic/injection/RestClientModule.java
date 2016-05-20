@@ -83,7 +83,7 @@ public class RestClientModule {
 
     @Provides
     public ImageLoader provideImageLoader(LastFMApi api) {
-        return new ImageLoader(api);
+        return new ImageLoader(api, app);
     }
 
     @Provides

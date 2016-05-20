@@ -78,10 +78,12 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
     public void handleMenuClick(Settings.Menu which, Song song, int position) {
         switch (which) {
             case Add:
+                showProgressDialog();
                 UserSession user = getUser();
                 getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken()).enqueue(new Callback<VKAddRemoveResult>() {
                     @Override
                     public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
+                        dismissProgressDialog();
                         VKAddRemoveResult body = response.body();
                         if (response.isSuccess() && body.isSuccessful()) {
                             eventBus.post(new UpdateMyMusicEvent());
@@ -93,6 +95,7 @@ public class SearchPresenter extends BaseListPresenter<Song> implements OnSearch
 
                     @Override
                     public void onFailure(Throwable t) {
+                        dismissProgressDialog();
                         showMessage(String.valueOf(t));
                     }
                 });
