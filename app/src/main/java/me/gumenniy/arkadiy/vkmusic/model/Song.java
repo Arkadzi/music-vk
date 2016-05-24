@@ -16,6 +16,8 @@ public class Song {
     private int duration;
     @SerializedName("owner_id")
     private String ownerId;
+    @SerializedName("lyrics_id")
+    private long lyricsId;
 
     public Song() {
 
@@ -66,5 +68,13 @@ public class Song {
     @Override
     public boolean equals(Object o) {
         return o != null && o instanceof Song && ((Song) o).getKey().equals(getKey());
+    }
+
+    public long getLyricsId() {
+        return lyricsId;
+    }
+
+    public boolean hasLyrics() {
+        return lyricsId > 0;
     }
 }

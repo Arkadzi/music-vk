@@ -1,35 +1,15 @@
 package me.gumenniy.arkadiy.vkmusic.rest.model;
 
-import android.support.annotation.Nullable;
-
-import com.google.gson.annotations.SerializedName;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
+import me.gumenniy.arkadiy.vkmusic.model.Lyrics;
 
 /**
- * Created by Arkadiy on 25.02.2016.
+ * Created by Arkadiy on 20.05.2016.
  */
 public class VKResult<T> {
+    private T response;
     private VKError error;
-    private VKResponse<T> response;
-    private List<T> altResponse;
 
-    public VKResult(VKError error) {
-        this.error = error;
-    }
-
-    public VKResult(VKResponse<T> response) {
-        this.response = response;
-    }
-
-    public boolean isSuccessful() {
-        return error == null && (response != null || altResponse != null);
-    }
-
-    public VKResponse<T> getResponse() {
+    public T getResponse() {
         return response;
     }
 
@@ -38,29 +18,16 @@ public class VKResult<T> {
         return String.valueOf(error) + " " + String.valueOf(response);
     }
 
+
     public VKError getError() {
         return error;
     }
 
-
-    @NotNull
-    public List<T> getData() {
-        if (response != null) {
-            return response.getItems();
-        } else if (altResponse != null) {
-            return altResponse;
-        } else {
-            return new ArrayList<>();
-        }
+    public boolean isSuccessful() {
+        return error == null && response != null;
     }
 
-    public int getCount() {
-        if (response != null) {
-            return response.getCount();
-        } else if (altResponse != null) {
-            return Short.MAX_VALUE;
-        } else {
-            return 0;
-        }
+    public void setResponse(T response) {
+        this.response = response;
     }
 }

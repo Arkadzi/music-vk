@@ -10,28 +10,25 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.squareup.picasso.Picasso;
 
-import java.util.Map;
-
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicService;
-import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
+import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
 public class ForegroundManager {
     private final Service c;
-    private final ImageLoader imageUrls;
+    private final SupportLoader imageUrls;
     private final int remoteSize;
     private final int expandedSize;
     private boolean isForeground;
 
-    public ForegroundManager(@NonNull Service c, @NonNull ImageLoader images) {
+    public ForegroundManager(@NonNull Service c, @NonNull SupportLoader images) {
         this.c = c;
         this.imageUrls = images;
         float density = c.getResources().getDisplayMetrics().density;
@@ -92,7 +89,7 @@ public class ForegroundManager {
         remoteViews.setTextViewText(R.id.notification_title, song.getTitle());
         final Notification notification = builder.build();
 
-        String url = imageUrls.getImageUrl(song.getKey());
+        String url = imageUrls.getLoadedImageUrl(song.getKey());
         Bitmap bitmap = imageUrls.getImageBitmap(song.getKey());
         if (bitmap != null) {
             remoteViews.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, remoteSize, remoteSize, false));

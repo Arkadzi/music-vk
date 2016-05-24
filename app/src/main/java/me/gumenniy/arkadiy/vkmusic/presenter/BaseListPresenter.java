@@ -11,7 +11,7 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKError;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.Call;
 import retrofit.Callback;
@@ -33,7 +33,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     @NonNull
     private UserSession user;
     @Nullable
-    private Call<VKResult<D>> call;
+    private Call<VKListResult<D>> call;
 
     public BaseListPresenter(@NonNull VkApi api, @NonNull UserSession user) {
         Log.e("listpresenter", hashCode() + " " + api.hashCode());
@@ -79,9 +79,9 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
         onLoadingStart(state);
 
         call = getApiCall(vkApi, user);
-        call.enqueue(new Callback<VKResult<D>>() {
+        call.enqueue(new Callback<VKListResult<D>>() {
             @Override
-            public void onResponse(Response<VKResult<D>> response, Retrofit retrofit) {
+            public void onResponse(Response<VKListResult<D>> response, Retrofit retrofit) {
                 if (response.isSuccess()) {
                     successfulResponse(response.body());
                 } else {
@@ -108,7 +108,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
 
-    private void successfulResponse(@NonNull VKResult<D> result) {
+    private void successfulResponse(@NonNull VKListResult<D> result) {
         if (result.isSuccessful()) {
             data.addAll(result.getData());
             count = result.getCount();
@@ -147,7 +147,7 @@ public abstract class BaseListPresenter<D> implements BasePresenter<BaseView<D>>
     }
 
     @NonNull
-    protected abstract Call<VKResult<D>> getApiCall(@NonNull VkApi api, @NonNull UserSession user);
+    protected abstract Call<VKListResult<D>> getApiCall(@NonNull VkApi api, @NonNull UserSession user);
 
     public void refresh() {
         reset();

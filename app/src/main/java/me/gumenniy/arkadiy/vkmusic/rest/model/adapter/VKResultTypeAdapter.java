@@ -12,23 +12,22 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 import me.gumenniy.arkadiy.vkmusic.model.Song;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResponse;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResponse;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 
 /**
  * Created by Arkadiy on 01.04.2016.
  */
-public class VKResultTypeAdapter<T> implements JsonDeserializer<VKResult<T>> {
+public class VKResultTypeAdapter<T> implements JsonDeserializer<VKListResult<T>> {
     private Gson gson = new GsonBuilder().create();
 
     @Override
-    public VKResult<T> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+    public VKListResult<T> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         Log.e("reader", String.format("%s %s %s", json, typeOfT, context));
-        VKResult<T> result;
+        VKListResult<T> result;
         try {
             result = gson.fromJson(json, typeOfT);
             Log.e("result", String.valueOf(result));
@@ -38,7 +37,7 @@ public class VKResultTypeAdapter<T> implements JsonDeserializer<VKResult<T>> {
             Type listType = new TypeToken<List<Song>>(){}.getType();
             List<T> list = gson.fromJson(response, listType);
             Log.e("result", String.valueOf(list.getClass() + list.toString()));
-            return new VKResult<>(new VKResponse<>(6000, list));
+            return new VKListResult<>(new VKListResponse<>(6000, list));
         }
     }
 }

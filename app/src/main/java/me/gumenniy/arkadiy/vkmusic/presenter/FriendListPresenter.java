@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import me.gumenniy.arkadiy.vkmusic.model.Friend;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import retrofit.Call;
 
 /**
@@ -26,7 +26,7 @@ public class FriendListPresenter extends BaseListPresenter<Friend> {
 
     @Override
     @NonNull
-    protected Call<VKResult<Friend>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
+    protected Call<VKListResult<Friend>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         return api.getFriends(user.getClientId(), getData().size(), 100);
     }
 

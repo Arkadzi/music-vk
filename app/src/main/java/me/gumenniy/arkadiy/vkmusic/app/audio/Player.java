@@ -37,6 +37,7 @@ public interface Player {
     String getImageUrl(@NonNull Song item);
 
     boolean isShouldStart();
+    String getLyrics(Song item);
 
     interface PlayerListener {
         void onBeginPreparingSong(int position, @NonNull Song song, boolean shouldStart);
@@ -47,5 +48,6 @@ public interface Player {
         void onSongBuffering(int bufferedPercent, int progress);
         void onImageLoaded(@NonNull Song song, @NonNull Bitmap bitmap);
         void onUrlLoaded(@NonNull Song song, @NonNull String url);
+        void onLyricsLoaded(Song song, String lyrics);
     }
 }

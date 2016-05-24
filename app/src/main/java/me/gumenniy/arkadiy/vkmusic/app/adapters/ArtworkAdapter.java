@@ -56,7 +56,7 @@ public class ArtworkAdapter extends PagerAdapter {
             view.setTag(item.getKey());
             Bitmap bitmap = presenter.askBitmap(item);
             String url = presenter.askUrl(item);
-            ((TextView) view.findViewById(R.id.title)).setText(position + ") " + String.valueOf(item));
+            updateViewText(view, presenter.askLyrics(item));
             if (bitmap != null) {
                 updateView(view, bitmap);
             } else if (url != null) {
@@ -96,5 +96,9 @@ public class ArtworkAdapter extends PagerAdapter {
         songs.clear();
         songs.addAll(queue);
         notifyDataSetChanged();
+    }
+
+    public void updateViewText(View view, String lyrics) {
+        ((TextView) view.findViewById(R.id.title)).setText(lyrics);
     }
 }

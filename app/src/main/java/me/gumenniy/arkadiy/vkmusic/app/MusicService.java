@@ -22,7 +22,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import me.gumenniy.arkadiy.vkmusic.app.async.AsyncExecutor;
-import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
+import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
 import me.gumenniy.arkadiy.vkmusic.app.audio.ForegroundManager;
 import me.gumenniy.arkadiy.vkmusic.app.audio.Player;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
@@ -37,7 +37,7 @@ public class MusicService extends Service implements Player,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener,
         MediaPlayer.OnErrorListener,
-        MediaPlayer.OnBufferingUpdateListener, ImageLoader.OnImageLoadedListener {
+        MediaPlayer.OnBufferingUpdateListener, SupportLoader.OnImageLoadedListener {
 
 
     private static final int BUFFER_LOOP_MAX_COUNT = 100;
@@ -48,7 +48,7 @@ public class MusicService extends Service implements Player,
     @Inject
     EventBus eventBus;
     @Inject
-    ImageLoader imageLoader;
+    SupportLoader supportLoader;
 
     @Nullable
     private PlayerListener playerListener;
@@ -79,7 +79,7 @@ public class MusicService extends Service implements Player,
         (MusicApplication.getApp(this)).getComponent().inject(this);
         eventBus.register(this);
         preparePlayerExecutor();
-        foregroundManager = new ForegroundManager(this, imageLoader);
+        foregroundManager = new ForegroundManager(this, supportLoader);
         initMediaPlayer();
     }
 
@@ -110,7 +110,7 @@ public class MusicService extends Service implements Player,
         if (isShouldStart()) {
             start();
         }
-        loadImageUrlAsync(getCurrentSong());
+        loadAdditionalSongDataAsync(getCurrentSong());
     }
 
     @Override
@@ -174,8 +174,8 @@ public class MusicService extends Service implements Player,
         }
     }
 
-    private void loadImageUrlAsync(final Song song) {
-        imageLoader.loadArtwork(song, !localStoragePlayback);
+    private void loadAdditionalSongDataAsync(final Song song) {
+        supportLoader.loadData(song, !localStoragePlayback);
     }
 
     @Override
@@ -184,6 +184,17 @@ public class MusicService extends Service implements Player,
         Song currSong = getCurrentSong();
         if (song.equals(currSong)) {
             foregroundManager.updateRemoteView(song, isPlaying());
+        }
+    }
+
+    @Override
+    public void onLyricsLoaded(Song song, String lyrics) {
+        notifyLyricsLoaded(song, lyrics);
+    }
+
+    private void notifyLyricsLoaded(Song song, String lyrics) {
+        if (playerListener != null) {
+            playerListener.onLyricsLoaded(song, lyrics);
         }
     }
 
@@ -208,6 +219,8 @@ public class MusicService extends Service implements Player,
             playerListener.onUrlLoaded(song, url);
         }
     }
+
+
 
     private void playCurrentSong(boolean resetPosition) {
         stopUpdatingSongBuffering();
@@ -255,12 +268,12 @@ public class MusicService extends Service implements Player,
         playerExecutor = new AsyncExecutor("player");
         playerExecutor.start();
         playerExecutor.prepareHandler();
-        imageLoader.setListener(this);
+        supportLoader.setListener(this);
     }
 
     private void quitPlayerExecutor() {
         playerExecutor.quit();
-        imageLoader.abandon();
+        supportLoader.abandon();
     }
 
     private void startUpdatingSongBuffering() {
@@ -392,13 +405,18 @@ public class MusicService extends Service implements Player,
     @Nullable
     @Override
     public Bitmap getImageBitmap(@NonNull Song song) {
-        return imageLoader.getImageBitmap(song.getKey());
+        return supportLoader.getImageBitmap(song.getKey());
     }
 
     @Nullable
     @Override
     public String getImageUrl(@NonNull Song song) {
-        return imageLoader.getImageUrl(song.getKey());
+        return supportLoader.getLoadedImageUrl(song.getKey());
+    }
+
+    @Override
+    public String getLyrics(Song song) {
+        return supportLoader.getLoadedLyrics(song.getKey());
     }
 
     @NonNull

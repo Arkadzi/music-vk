@@ -11,7 +11,7 @@ public interface Settings {
     int CLIENT_ID = 5315866;
     String REDIRECT_URI = "https://oauth.vk.com/blank.html";
     String LAST_FM_API_KEY = "fe92647a6609aea759d311e37abac103";
-    String CACHE_DIRECTORY = Environment.getExternalStorageDirectory() + File.separator + "vkmusic";
+    String CACHE_DIRECTORY = Environment.getExternalStorageDirectory() + File.separator + ".vkmusic";
     String CONNECTIONS_FILE = CACHE_DIRECTORY + File.separator + "connections.txt";
     String PREFS = "prefs";
 

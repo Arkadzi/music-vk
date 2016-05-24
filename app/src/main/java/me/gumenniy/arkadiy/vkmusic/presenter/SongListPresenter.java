@@ -15,8 +15,8 @@ import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKAddRemoveResult;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKError;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.Call;
@@ -55,7 +55,7 @@ public class SongListPresenter extends BaseListPresenter<Song> {
 
     @Override
     @NonNull
-    protected Call<VKResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
+    protected Call<VKListResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         String ownerId = (userId.equals(CURRENT_USER)) ? user.getClientId() : userId;
         if (recommended) {
             return api.getRecommendedSongs(ownerId, getData().size(), 50, user.getToken());
@@ -67,7 +67,7 @@ public class SongListPresenter extends BaseListPresenter<Song> {
     @Override
     public void handleMenuClick(final Settings.Menu which, final Song song, final int position) {
         UserSession user = getUser();
-        Call<VKAddRemoveResult> vkAddRemoveResultCall = null;
+        Call<VKResult<Long>> vkAddRemoveResultCall = null;
         switch (which) {
             case Add:
                 vkAddRemoveResultCall = getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken());
@@ -83,11 +83,11 @@ public class SongListPresenter extends BaseListPresenter<Song> {
         }
 
         if (vkAddRemoveResultCall != null) {
-            vkAddRemoveResultCall.enqueue(new Callback<VKAddRemoveResult>() {
+            vkAddRemoveResultCall.enqueue(new Callback<VKResult<Long>>() {
                 @Override
-                public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
+                public void onResponse(Response<VKResult<Long>> response, Retrofit retrofit) {
                     dismissProgressDialog();
-                    VKAddRemoveResult body = response.body();
+                    VKResult<Long> body = response.body();
                     if (!response.isSuccess() || !body.isSuccessful()) {
                         showMessage(body.getError().getErrorMessage());
                     } else if (which == Settings.Menu.Delete && song == getData().get(position)) {

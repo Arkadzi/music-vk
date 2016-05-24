@@ -12,7 +12,7 @@ import me.gumenniy.arkadiy.vkmusic.model.Group;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.AccessDeniedEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import retrofit.Call;
 
 /**
@@ -45,7 +45,7 @@ public class GroupListPresenter extends BaseListPresenter<Group> {
 
     @Override
     @NonNull
-    protected Call<VKResult<Group>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
+    protected Call<VKListResult<Group>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         return api.getGroups(user.getClientId(), getData().size(), 100, user.getToken());
     }
 

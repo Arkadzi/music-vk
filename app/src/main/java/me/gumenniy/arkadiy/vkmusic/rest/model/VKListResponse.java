@@ -5,11 +5,11 @@ import java.util.List;
 /**
  * Created by Arkadiy on 25.02.2016.
  */
-public class VKResponse<T> {
+public class VKListResponse<T> {
     private int count;
     private List<T> items;
 
-    public VKResponse(int count, List<T> items) {
+    public VKListResponse(int count, List<T> items) {
         this.count = count;
         this.items = items;
     }

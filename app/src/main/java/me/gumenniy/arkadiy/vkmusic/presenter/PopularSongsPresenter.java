@@ -1,7 +1,6 @@
 package me.gumenniy.arkadiy.vkmusic.presenter;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -14,7 +13,7 @@ import me.gumenniy.arkadiy.vkmusic.presenter.event.StartLoadingEvent;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.UpdateMyMusicEvent;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKAddRemoveResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 import retrofit.Call;
@@ -39,7 +38,7 @@ public class PopularSongsPresenter extends BaseListPresenter<Song> implements Me
 
     @NonNull
     @Override
-    protected Call<VKResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
+    protected Call<VKListResult<Song>> getApiCall(@NonNull VkApi api, @NonNull UserSession user) {
         if (genreId == 0) {
             return api.getPopularSongs(onlyEng, getData().size(), 3, user.getToken());
         } else {
@@ -53,11 +52,11 @@ public class PopularSongsPresenter extends BaseListPresenter<Song> implements Me
             case Add:
                 showProgressDialog();
                 UserSession user = getUser();
-                getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken()).enqueue(new Callback<VKAddRemoveResult>() {
+                getVkApi().addSong(song.getId(), song.getOwnerId(), user.getToken()).enqueue(new Callback<VKResult<Long>>() {
                     @Override
-                    public void onResponse(Response<VKAddRemoveResult> response, Retrofit retrofit) {
+                    public void onResponse(Response<VKResult<Long>> response, Retrofit retrofit) {
                         dismissProgressDialog();
-                        VKAddRemoveResult body = response.body();
+                        VKResult<Long> body = response.body();
                         if (response.isSuccess() && body.isSuccessful()) {
                             eventBus.post(new UpdateMyMusicEvent());
                             showMessage("added");

@@ -12,7 +12,6 @@ import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
-import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 
 import org.greenrobot.eventbus.EventBus;
@@ -25,7 +24,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
-import me.gumenniy.arkadiy.vkmusic.app.async.ImageLoader;
+import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
 import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.SongCache;
@@ -35,7 +34,7 @@ import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.ArtworkAdapter;
 import me.gumenniy.arkadiy.vkmusic.rest.model.adapter.VKResultTypeAdapter;
 import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKListResult;
 import retrofit.GsonConverterFactory;
 import retrofit.Retrofit;
 
@@ -82,15 +81,15 @@ public class RestClientModule {
     }
 
     @Provides
-    public ImageLoader provideImageLoader(LastFMApi api) {
-        return new ImageLoader(api, app);
+    public SupportLoader provideImageLoader(LastFMApi lastFMApi, VkApi vkApi,  UserSession userSession) {
+        return new SupportLoader(lastFMApi, vkApi, app, userSession);
     }
 
     @Provides
     @Singleton
     public Retrofit provideRetrofit(OkHttpClient okClient) {
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(VKResult.class, new VKResultTypeAdapter())
+                .registerTypeAdapter(VKListResult.class, new VKResultTypeAdapter())
                 .registerTypeAdapter(Album.class, new AlbumAdapter())
                 .registerTypeAdapter(Artwork.class, new ArtworkAdapter())
                 .create();

@@ -143,6 +143,13 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
         }
     }
 
+    @Override
+    public void onLyricsLoaded(Song song, String lyrics) {
+        if (view != null) {
+            view.renderLyrics(song, lyrics);
+        }
+    }
+
     public void onProgressChanged(int progress) {
         if (player != null) {
             player.seekTo(progress * 1000);
@@ -167,5 +174,12 @@ public class PlaybackPresenter implements BasePresenter<PlaybackView>, Player.Pl
             return player.getImageUrl(item);
         }
         return null;
+    }
+
+    public String askLyrics(Song item) {
+        if (player != null) {
+            return player.getLyrics(item);
+        }
+        return "";
     }
 }

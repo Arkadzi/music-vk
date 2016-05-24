@@ -22,4 +22,6 @@ public interface PlaybackView {
 
     void renderImage(@NonNull Song song, @NonNull Bitmap bitmap);
     void renderImage(@NonNull Song song, @NonNull String url);
+
+    void renderLyrics(Song song, String lyrics);
 }

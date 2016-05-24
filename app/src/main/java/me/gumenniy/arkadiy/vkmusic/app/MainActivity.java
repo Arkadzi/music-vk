@@ -358,7 +358,6 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
             isUserInteraction = false;
             pager.setCurrentItem(position);
         }
-//        setBufferProgress(0, 0);
         enableControlPanel();
     }
 
@@ -393,6 +392,17 @@ public class MainActivity extends AppCompatActivity implements RequestTokenListe
             String tag = (String) child.getTag();
             if (song.getKey().equals(tag)) {
                 adapter.updateView(child, url);
+            }
+        }
+    }
+
+    @Override
+    public void renderLyrics(Song song, String lyrics) {
+        for (int i = 0; i < pager.getChildCount(); i++) {
+            View child = pager.getChildAt(i);
+            String tag = (String) child.getTag();
+            if (song.getKey().equals(tag)) {
+                adapter.updateViewText(child, lyrics);
             }
         }
     }
