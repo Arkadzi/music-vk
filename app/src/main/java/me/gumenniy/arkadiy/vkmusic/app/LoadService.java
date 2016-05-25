@@ -27,39 +27,37 @@ import java.net.URL;
 import javax.inject.Inject;
 
 import me.gumenniy.arkadiy.vkmusic.R;
+import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.SongLoadedEvent;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
 
 public class LoadService extends IntentService {
     private static final String ACTION_LOAD = "me.gumenniy.arkadiy.vkmusic.app.action.LOAD";
-    private static final String EXTRA_URL = "me.gumenniy.arkadiy.vkmusic.app.extra.URL";
-    private static final String EXTRA_TITLE = "me.gumenniy.arkadiy.vkmusic.app.extra.TITLE";
-    private static final String EXTRA_ARTIST = "me.gumenniy.arkadiy.vkmusic.app.extra.ARTIST";
-    private static final String EXTRA_DURATION = "me.gumenniy.arkadiy.vkmusic.app.extra.DURATION";
+    private static final String EXTRA_SONG = "me.gumenniy.arkadiy.vkmusic.app.extra.SONG";
+
     private final Handler handler = new Handler();
-    private NotificationManager mNotifyManager;
     @Inject
     EventBus eventBus;
+    private NotificationManager mNotifyManager;
+    private DbHelper helper;
 
     public LoadService() {
         super("LoadService");
+    }
+
+    public static void startActionLoad(Context context, Song song) {
+        Intent intent = new Intent(context, LoadService.class);
+        intent.setAction(ACTION_LOAD);
+        intent.putExtra(EXTRA_SONG, song);
+        context.startService(intent);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         MusicApplication.getApp(this).getComponent().inject(this);
-    }
-
-    public static void startActionLoad(Context context, Song song) {
-        Intent intent = new Intent(context, LoadService.class);
-        intent.setAction(ACTION_LOAD);
-        intent.putExtra(EXTRA_URL, song.getUrl());
-        intent.putExtra(EXTRA_TITLE, song.getTitle());
-        intent.putExtra(EXTRA_ARTIST, song.getArtist());
-        intent.putExtra(EXTRA_DURATION, song.getDuration());
-        context.startService(intent);
+        helper = DbHelper.getInstance(this);
     }
 
     @Override
@@ -67,12 +65,7 @@ public class LoadService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_LOAD.equals(action)) {
-                final String url = intent.getStringExtra(EXTRA_URL);
-                final String title = intent.getStringExtra(EXTRA_TITLE);
-                final String artist = intent.getStringExtra(EXTRA_ARTIST);
-                final int duration = intent.getIntExtra(EXTRA_DURATION, 0);
-
-                Song song = new Song("", title, artist, url, duration, "");
+                Song song = (Song) intent.getSerializableExtra(EXTRA_SONG);
                 handleActionLoad(song);
             }
         }
@@ -105,7 +98,7 @@ public class LoadService extends IntentService {
                     is = new BufferedInputStream(urlConnection.getInputStream());
                     if (file == null) {
                         file = new File(folder + File.separator + fileName);
-                        addRecord(fileName, song);
+                        addRecord(file.toString(), song);
                     }
                     os = new BufferedOutputStream(new FileOutputStream(file));
                     byte[] buffer = new byte[1024];
@@ -185,36 +178,37 @@ public class LoadService extends IntentService {
     }
 
     private void addRecord(String file, Song song) throws IOException {
-        File connectionFile = new File(Settings.CONNECTIONS_FILE);
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(connectionFile, true));
-            String string = getAppendedString(file, song);
-            writer.write(string);
-            writer.newLine();
-            writer.flush();
-            Log.e("Async", "connection done " + connectionFile);
-        } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        helper.saveSong(file, song);
+//        File connectionFile = new File(Settings.CONNECTIONS_FILE);
+//        BufferedWriter writer = null;
+//        try {
+//            writer = new BufferedWriter(new FileWriter(connectionFile, true));
+//            String string = getAppendedString(file, song);
+//            writer.write(string);
+//            writer.newLine();
+//            writer.flush();
+//            Log.e("Async", "connection done " + connectionFile);
+//        } finally {
+//            try {
+//                if (writer != null) {
+//                    writer.close();
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
-
-    @NonNull
-    private String getAppendedString(String file, Song song) {
-        return file +
-                "|" +
-                song.getTitle() +
-                "|" +
-                song.getArtist() +
-                "|" +
-                String.valueOf(song.getDuration());
-    }
+//
+//    @NonNull
+//    private String getAppendedString(String file, Song song) {
+//        return file +
+//                "|" +
+//                song.getTitle() +
+//                "|" +
+//                song.getArtist() +
+//                "|" +
+//                String.valueOf(song.getDuration());
+//    }
 
     private NotificationCompat.Builder createBuilder(Song song) {
         mNotifyManager =

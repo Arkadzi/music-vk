@@ -57,6 +57,7 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
     compile 'org.jetbrains:annotations:13.0'
+    compile files('libs/MyID3_for_Android.jar')
 }
 //buildscript {
 //    ext.kotlin_version = '1.0.0'

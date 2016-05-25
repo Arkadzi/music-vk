@@ -10,6 +10,11 @@ public class Lyrics {
     private String lyricsId;
     private String text;
 
+    public Lyrics(String lyricsId, String text) {
+        this.lyricsId = lyricsId;
+        this.text = text;
+    }
+
     public String getLyricsId() {
         return lyricsId;
     }

@@ -27,7 +27,7 @@ public interface VkApi {
 
     @GET("audio.getLyrics?v=5.5")
     Call<VKResult<Lyrics>> getLyrics(
-            @Query("lyrics_id") long lyricsId,
+            @Query("lyrics_id") String lyricsId,
             @Query("access_token") String token);
 
     @FormUrlEncoded

@@ -130,6 +130,11 @@ public class SupportLoader {
     private Bitmap retrieveAudioStreamMetadata(final Song song) {
         retriever.setDataSource(song.getUrl(), new HashMap<String, String>());
         byte[] byteBitmap = retriever.getEmbeddedPicture();
+        return bytesToBitmap(byteBitmap);
+    }
+
+    @Nullable
+    private Bitmap bytesToBitmap(byte[] byteBitmap) {
         Bitmap result = null;
         if (byteBitmap != null) {
             BitmapFactory.Options options = new BitmapFactory.Options();

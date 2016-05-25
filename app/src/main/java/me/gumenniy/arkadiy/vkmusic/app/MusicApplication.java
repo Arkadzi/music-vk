@@ -2,7 +2,9 @@ package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.app.Application;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
+import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
 import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
 import me.gumenniy.arkadiy.vkmusic.injection.RestClientModule;
 import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;

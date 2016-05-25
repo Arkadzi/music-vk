@@ -1,13 +1,17 @@
 package me.gumenniy.arkadiy.vkmusic.model;
 
+import android.text.TextUtils;
+
 import com.google.gson.annotations.SerializedName;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * Created by Arkadiy on 24.02.2016.
  */
-public class Song {
+public class Song implements Serializable {
     public static final String LOCAL_ID = "0";
     private String id;
     private String title;
@@ -17,19 +21,21 @@ public class Song {
     @SerializedName("owner_id")
     private String ownerId;
     @SerializedName("lyrics_id")
-    private long lyricsId;
+    private String lyricsId;
 
     public Song() {
 
     }
 
-    public Song(String id, String title, String artist, String url, int duration, String ownerId) {
+
+    public Song(String id, String title, String artist, String url, int duration, String lyricsId, String ownerId) {
         this.id = id;
         this.title = title;
         this.artist = artist;
         this.url = url;
         this.duration = duration;
         this.ownerId = ownerId;
+        this.lyricsId = lyricsId;
     }
 
     public int getDuration() {
@@ -70,11 +76,11 @@ public class Song {
         return o != null && o instanceof Song && ((Song) o).getKey().equals(getKey());
     }
 
-    public long getLyricsId() {
-        return lyricsId;
+    public String getLyricsId() {
+        return lyricsId == null ? "0" : lyricsId;
     }
 
     public boolean hasLyrics() {
-        return lyricsId > 0;
+        return !getLyricsId().equals("0");
     }
 }
