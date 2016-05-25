@@ -33,18 +33,9 @@ public class DbHelper extends SQLiteOpenHelper {
     private static final String LYRICS_ID = "lyrics_id";
     private static final String LYRICS = "lyrics";
 
-    private static DbHelper helper;
 
     public DbHelper(Context context) {
         super(context, context.getExternalCacheDir() + File.separator + DB_NAME, null, DATABASE_VERSION);
-    }
-
-    public static DbHelper getInstance(Context context) {
-        if (helper == null) {
-            helper = new DbHelper(context.getApplicationContext());
-        }
-
-        return helper;
     }
 
     @Override
@@ -133,6 +124,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void saveLyrics(Lyrics lyrics) {
+        Log.e("lyrics", lyrics.getLyricsId() + " " + lyrics.getText());
         SQLiteDatabase db = getWritableDatabase();
 
         ContentValues values = new ContentValues();

@@ -25,6 +25,7 @@ import dagger.Module;
 import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
 import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
+import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
 import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.SongCache;
@@ -116,8 +117,14 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    public SongCache provideSongCache() {
-        return new SongCache(app);
+    public DbHelper provideDBHelper() {
+        return new DbHelper(app);
+    }
+
+    @Provides
+    @Singleton
+    public SongCache provideSongCache(DbHelper helper) {
+        return new SongCache(helper);
     }
 
     @Provides

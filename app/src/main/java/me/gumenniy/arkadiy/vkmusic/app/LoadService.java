@@ -5,19 +5,15 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -28,9 +24,15 @@ import javax.inject.Inject;
 
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
+import me.gumenniy.arkadiy.vkmusic.model.Lyrics;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.SongLoadedEvent;
+import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
+import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
+import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import retrofit.Call;
+import retrofit.Response;
 
 public class LoadService extends IntentService {
     private static final String ACTION_LOAD = "me.gumenniy.arkadiy.vkmusic.app.action.LOAD";
@@ -39,8 +41,14 @@ public class LoadService extends IntentService {
     private final Handler handler = new Handler();
     @Inject
     EventBus eventBus;
+    @Inject
+    DbHelper helper;
+    @Inject
+    UserSession userSession;
+    @Inject
+    VkApi vkApi;
+
     private NotificationManager mNotifyManager;
-    private DbHelper helper;
 
     public LoadService() {
         super("LoadService");
@@ -57,7 +65,6 @@ public class LoadService extends IntentService {
     public void onCreate() {
         super.onCreate();
         MusicApplication.getApp(this).getComponent().inject(this);
-        helper = DbHelper.getInstance(this);
     }
 
     @Override
@@ -73,6 +80,16 @@ public class LoadService extends IntentService {
 
     private void handleActionLoad(Song song) {
 
+        loadSong(song);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                eventBus.post(new SongLoadedEvent());
+            }
+        });
+    }
+
+    private void loadSong(Song song) {
         File folder = new File(Settings.CACHE_DIRECTORY);
         folder.mkdir();
 
@@ -93,7 +110,6 @@ public class LoadService extends IntentService {
                 urlConnection.connect();
                 if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
-                    Log.e("Async", String.valueOf(file));
                     int fileSize = urlConnection.getContentLength();
                     is = new BufferedInputStream(urlConnection.getInputStream());
                     if (file == null) {
@@ -109,7 +125,7 @@ public class LoadService extends IntentService {
                         totalRead += byteRead;
                         percent = updateProgress(builder, fileSize, totalRead, percent);
                     }
-                    Log.e("Async", "loaded ");
+                    loadLyrics(song);
                     showMessage(builder, R.string.downloadComplete);
                     is.close();
                     os.close();
@@ -118,7 +134,6 @@ public class LoadService extends IntentService {
                 isLoading = false;
             } catch (MalformedURLException me) {
                 showToast(getString(R.string.unableToLoad) + " " + song.getTitle());
-                Log.e("Async", "exception " + String.valueOf(me));
                 isLoading = false;
             } catch (SocketException se) {
                 try {
@@ -128,7 +143,6 @@ public class LoadService extends IntentService {
                 }
             } catch (IOException e) {
                 showMessage(builder, R.string.errorOccured);
-                Log.e("Async", "exception " + String.valueOf(e));
                 isLoading = false;
             } finally {
                 try {
@@ -143,12 +157,20 @@ public class LoadService extends IntentService {
                     urlConnection.disconnect();
             }
         }
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                eventBus.post(new SongLoadedEvent());
+    }
+
+    private void loadLyrics(Song song) {
+        try {
+            Call<VKResult<Lyrics>> lyricsCall = vkApi.getLyrics(song.getLyricsId(), userSession.getToken());
+            Response<VKResult<Lyrics>> lyricsResponse = lyricsCall.execute();
+            VKResult<Lyrics> lyricsResult = lyricsResponse.body();
+
+            if (lyricsResponse.isSuccess() && lyricsResult.isSuccessful()) {
+                Lyrics lyrics = lyricsResult.getResponse();
+                helper.saveLyrics(lyrics);
+
             }
-        });
+        } catch (IOException e) { }
     }
 
     private void showToast(final String message) {
@@ -179,43 +201,13 @@ public class LoadService extends IntentService {
 
     private void addRecord(String file, Song song) throws IOException {
         helper.saveSong(file, song);
-//        File connectionFile = new File(Settings.CONNECTIONS_FILE);
-//        BufferedWriter writer = null;
-//        try {
-//            writer = new BufferedWriter(new FileWriter(connectionFile, true));
-//            String string = getAppendedString(file, song);
-//            writer.write(string);
-//            writer.newLine();
-//            writer.flush();
-//            Log.e("Async", "connection done " + connectionFile);
-//        } finally {
-//            try {
-//                if (writer != null) {
-//                    writer.close();
-//                }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
     }
-//
-//    @NonNull
-//    private String getAppendedString(String file, Song song) {
-//        return file +
-//                "|" +
-//                song.getTitle() +
-//                "|" +
-//                song.getArtist() +
-//                "|" +
-//                String.valueOf(song.getDuration());
-//    }
 
     private NotificationCompat.Builder createBuilder(Song song) {
         mNotifyManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         return new NotificationCompat.Builder(this)
                 .setContentTitle(String.format("%s - %s", song.getTitle(), song.getArtist()))
-//                .setContentText(getString(R.string.downloadInProgress))
                 .setSmallIcon(R.drawable.ic_save_white_36dp);
     }
 }

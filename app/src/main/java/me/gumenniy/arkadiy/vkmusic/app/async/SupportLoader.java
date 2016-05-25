@@ -48,7 +48,6 @@ public class SupportLoader {
 
     public SupportLoader(LastFMApi lastFMApi, VkApi vkApi, Context context, UserSession userSession) {
         this.lastFMApi = lastFMApi;
-
         initCache();
         initDownloader();
         this.vkApi = vkApi;
