@@ -416,7 +416,7 @@ public class MusicService extends Service implements Player,
 
     @Override
     public String getLyrics(Song song) {
-        return supportLoader.getLoadedLyrics(song.getKey());
+        return supportLoader.getLoadedLyrics(song.getLyricsId());
     }
 
     @NonNull

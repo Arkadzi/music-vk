@@ -2,7 +2,6 @@ package me.gumenniy.arkadiy.vkmusic.app.async;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -12,8 +11,15 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Singleton;
+
+import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
+import me.gumenniy.arkadiy.vkmusic.app.db.Storage;
+import me.gumenniy.arkadiy.vkmusic.app.db.StorageFactory;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.Lyrics;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
@@ -22,6 +28,7 @@ import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
 import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
 import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
 import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import me.gumenniy.arkadiy.vkmusic.utils.UtilMethods;
 import retrofit.Call;
 import retrofit.Response;
 
@@ -32,8 +39,8 @@ public class SupportLoader {
     public static final String NONE = "NONE";
     private static final int LOAD = 1010;
     private final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-    private final HashMap<String, String> urls = new HashMap<>();
-    private final HashMap<String, String> lyricsList = new HashMap<>();
+    private final Map<String, String> urls = new HashMap<>();
+    private final Map<String, String> lyricsMap = new HashMap<>();
     private final Set<String> imageless = new HashSet<>();
     private final Handler handler = new Handler();
     private final int size;
@@ -46,49 +53,23 @@ public class SupportLoader {
     private LruCache<String, Bitmap> cache;
     private AsyncExecutor downloader;
 
-    public SupportLoader(LastFMApi lastFMApi, VkApi vkApi, Context context, UserSession userSession) {
+    public SupportLoader(LastFMApi lastFMApi, VkApi vkApi,
+                         Context context, UserSession userSession, StorageFactory factory) {
         this.lastFMApi = lastFMApi;
-        initCache();
-        initDownloader();
         this.vkApi = vkApi;
         this.userSession = userSession;
         size = context.getResources().getDisplayMetrics().widthPixels;
+
+        initCache();
+        initDownloader();
+        readLyrics(factory.getLyricsStorage());
     }
 
-    public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            while ((halfHeight / inSampleSize) > reqHeight
-                    && (halfWidth / inSampleSize) > reqWidth) {
-                inSampleSize *= 2;
-            }
+    private void readLyrics(Storage<Lyrics> factory) {
+        List<Lyrics> lyricsList = factory.fetch();
+        for (Lyrics lyrics : lyricsList) {
+            this.lyricsMap.put(lyrics.getLyricsId(), lyrics.getText());
         }
-
-        return inSampleSize;
-    }
-
-    public void abandon() {
-        setListener(null);
-        downloader.quit();
-    }
-
-    public void setListener(OnImageLoadedListener listener) {
-        this.listener = listener;
-    }
-
-    private void initDownloader() {
-        downloader = new AsyncExecutor("image");
-        downloader.start();
-        downloader.prepareHandler();
     }
 
     private void initCache() {
@@ -103,9 +84,19 @@ public class SupportLoader {
         };
     }
 
-    private void putImageBitmap(String key, Bitmap b) {
-        if (getImageBitmap(key) == null)
-            cache.put(key, b);
+    private void initDownloader() {
+        downloader = new AsyncExecutor("image");
+        downloader.start();
+        downloader.prepareHandler();
+    }
+
+    public void abandon() {
+        setListener(null);
+        downloader.quit();
+    }
+
+    public void setListener(OnImageLoadedListener listener) {
+        this.listener = listener;
     }
 
     @Nullable
@@ -121,33 +112,15 @@ public class SupportLoader {
     }
 
     public String getLoadedLyrics(String key) {
-        String lyrics = lyricsList.get(key);
-        if (lyrics == null) lyrics = "";
-        return lyrics;
+        String lyrics = lyricsMap.get(key);
+        return lyrics == null ? "" : lyrics;
     }
 
     private Bitmap retrieveAudioStreamMetadata(final Song song) {
         retriever.setDataSource(song.getUrl(), new HashMap<String, String>());
         byte[] byteBitmap = retriever.getEmbeddedPicture();
-        return bytesToBitmap(byteBitmap);
-    }
 
-    @Nullable
-    private Bitmap bytesToBitmap(byte[] byteBitmap) {
-        Bitmap result = null;
-        if (byteBitmap != null) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(byteBitmap, 0, byteBitmap.length, options);
-            options.inSampleSize = calculateInSampleSize(options, size, size);
-            options.inJustDecodeBounds = false;
-            options.inPreferredConfig = Bitmap.Config.RGB_565;
-            result = BitmapFactory.decodeByteArray(byteBitmap, 0, byteBitmap.length, options);
-            if (result != null) {
-                Log.e("bitmap", String.format("%d %d", result.getWidth(), result.getHeight()));
-            }
-        }
-        return result;
+        return UtilMethods.bytesToBitmap(byteBitmap, size, size);
     }
 
     private String getArtworkUrl(Song song) {
@@ -172,6 +145,12 @@ public class SupportLoader {
         return url;
     }
 
+    private void putImageBitmap(String key, Bitmap b) {
+        if (getImageBitmap(key) == null) {
+            cache.put(key, b);
+        }
+    }
+
     public void loadData(final Song song, final boolean loadByUrl) {
         downloader.postTask(LOAD, new Runnable() {
 
@@ -190,7 +169,6 @@ public class SupportLoader {
             postLoadedUrl(song, url);
         } else if (!imageless.contains(song.getKey())) {
             Bitmap bitmap = getImageBitmap(song.getKey());
-            Log.e("notification", "" + (bitmap == null));
             if (bitmap == null) {
                 bitmap = retrieveAudioStreamMetadata(song);
             }
@@ -199,7 +177,8 @@ public class SupportLoader {
     }
 
     private void loadLyrics(Song song) {
-        String lyrics = lyricsList.get(song.getKey());
+        String lyrics = lyricsMap.get(song.getLyricsId());
+        Log.e("lyrics", String.valueOf(lyrics) + " " + song.hasLyrics());
         if (lyrics == null && song.hasLyrics()) {
             try {
                 Call<VKResult<Lyrics>> lyricsCall = vkApi.getLyrics(song.getLyricsId(), userSession.getToken());
@@ -218,16 +197,19 @@ public class SupportLoader {
     }
 
     private void postLoadedLyrics(final Song song, final String lyrics) {
-        Log.e("lyrics", lyrics);
         handler.post(new Runnable() {
             @Override
             public void run() {
                 if (!lyrics.isEmpty()) {
-                    lyricsList.put(song.getKey(), lyrics);
+                    addLyrics(song, lyrics);
                 }
                 listener.onLyricsLoaded(song, lyrics);
             }
         });
+    }
+
+    public void addLyrics(Song song, String lyrics) {
+        lyricsMap.put(song.getLyricsId(), lyrics);
     }
 
     private void postLoadedUrl(final Song song, @Nullable final String url) {

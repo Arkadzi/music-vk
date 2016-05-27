@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
@@ -23,7 +24,8 @@ import java.net.URL;
 import javax.inject.Inject;
 
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
+import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
+import me.gumenniy.arkadiy.vkmusic.app.db.StorageFactory;
 import me.gumenniy.arkadiy.vkmusic.model.Lyrics;
 import me.gumenniy.arkadiy.vkmusic.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presenter.event.SongLoadedEvent;
@@ -42,11 +44,13 @@ public class LoadService extends IntentService {
     @Inject
     EventBus eventBus;
     @Inject
-    DbHelper helper;
+    StorageFactory storageFactory;
     @Inject
     UserSession userSession;
     @Inject
     VkApi vkApi;
+    @Inject
+    SupportLoader supportLoader;
 
     private NotificationManager mNotifyManager;
 
@@ -159,18 +163,27 @@ public class LoadService extends IntentService {
         }
     }
 
-    private void loadLyrics(Song song) {
-        try {
-            Call<VKResult<Lyrics>> lyricsCall = vkApi.getLyrics(song.getLyricsId(), userSession.getToken());
-            Response<VKResult<Lyrics>> lyricsResponse = lyricsCall.execute();
-            VKResult<Lyrics> lyricsResult = lyricsResponse.body();
+    private void loadLyrics(final Song song) {
+        if (song.hasLyrics()) {
+            try {
+                Call<VKResult<Lyrics>> lyricsCall = vkApi.getLyrics(song.getLyricsId(), userSession.getToken());
+                Response<VKResult<Lyrics>> lyricsResponse = lyricsCall.execute();
+                VKResult<Lyrics> lyricsResult = lyricsResponse.body();
 
-            if (lyricsResponse.isSuccess() && lyricsResult.isSuccessful()) {
-                Lyrics lyrics = lyricsResult.getResponse();
-                helper.saveLyrics(lyrics);
-
+                if (lyricsResponse.isSuccess() && lyricsResult.isSuccessful()) {
+                    final Lyrics lyrics = lyricsResult.getResponse();
+                    storageFactory.getLyricsStorage().save(lyrics);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.e("lyrics", lyrics.getText());
+                            supportLoader.addLyrics(song, lyrics.getText());
+                        }
+                    });
+                }
+            } catch (IOException e) {
             }
-        } catch (IOException e) { }
+        }
     }
 
     private void showToast(final String message) {
@@ -200,7 +213,15 @@ public class LoadService extends IntentService {
     }
 
     private void addRecord(String file, Song song) throws IOException {
-        helper.saveSong(file, song);
+        Song localSong = new Song(
+                song.getId(),
+                song.getTitle(),
+                song.getArtist(),
+                file, song.getDuration(),
+                song.getLyricsId(),
+                song.getOwnerId());
+
+        storageFactory.getSongStorage().save(localSong);
     }
 
     private NotificationCompat.Builder createBuilder(Song song) {

@@ -67,53 +67,38 @@ public class ForegroundManager {
         PendingIntent stop = getPendingIntent(Settings.Notification.ACTION.STOP_SERVICE_ACTION);
         PendingIntent pp = getPendingIntent(Settings.Notification.ACTION.PAUSE_PLAY_ACTION);
 
-        final RemoteViews remoteViews = new RemoteViews(c.getPackageName(), R.layout.notification_widget);
+        final RemoteViews remoteView = new RemoteViews(c.getPackageName(), R.layout.notification_widget);
 
-        remoteViews.setOnClickPendingIntent(R.id.notification_prev, prev);
-        remoteViews.setOnClickPendingIntent(R.id.notification_next, next);
-        remoteViews.setOnClickPendingIntent(R.id.notification_stop, stop);
-        remoteViews.setOnClickPendingIntent(R.id.notification_pp, pp);
+        remoteView.setOnClickPendingIntent(R.id.notification_prev, prev);
+        remoteView.setOnClickPendingIntent(R.id.notification_next, next);
+        remoteView.setOnClickPendingIntent(R.id.notification_stop, stop);
+        remoteView.setOnClickPendingIntent(R.id.notification_pp, pp);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(c)
                 .setSmallIcon(R.drawable.ic_play_arrow_white_24dp)
                 .setTicker(song.getTitle())
-                .setContent(remoteViews)
+                .setContent(remoteView)
                 .setContentIntent(resultPendingIntent);
 
         if (isPlaying) {
-            remoteViews.setImageViewResource(R.id.notification_pp, R.drawable.ic_pause_white_24dp);
+            remoteView.setImageViewResource(R.id.notification_pp, R.drawable.ic_pause_white_24dp);
         } else {
-            remoteViews.setImageViewResource(R.id.notification_pp, R.drawable.ic_play_arrow_white_24dp);
+            remoteView.setImageViewResource(R.id.notification_pp, R.drawable.ic_play_arrow_white_24dp);
         }
-        remoteViews.setTextViewText(R.id.notification_artist, song.getArtist());
-        remoteViews.setTextViewText(R.id.notification_title, song.getTitle());
+        remoteView.setTextViewText(R.id.notification_artist, song.getArtist());
+        remoteView.setTextViewText(R.id.notification_title, song.getTitle());
         final Notification notification = builder.build();
 
         String url = imageUrls.getLoadedImageUrl(song.getKey());
         Bitmap bitmap = imageUrls.getImageBitmap(song.getKey());
-        if (bitmap != null) {
-            remoteViews.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, remoteSize, remoteSize, false));
-        } else if (url != null) {
-            Picasso.with(c)
-                    .load(url)
-                    .into(remoteViews, R.id.album_art, Settings.Notification.FOREGROUND_SERVICE, notification);
-        } else {
-            remoteViews.setImageViewResource(R.id.album_art, R.drawable.default_cover);
-        }
+        setBitmap(remoteView, notification, url, bitmap, remoteSize);
 
         if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)) {
             final RemoteViews expandedView = new RemoteViews(c.getPackageName(), R.layout.notification_expanded);
             notification.bigContentView = expandedView;
 
-            if (bitmap != null) {
-                expandedView.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, expandedSize, expandedSize, false));
-            } else if (url != null) {
-                Picasso.with(c)
-                        .load(url)
-                        .into(expandedView, R.id.album_art, Settings.Notification.FOREGROUND_SERVICE, notification);
-            } else {
-                expandedView.setImageViewResource(R.id.album_art, R.drawable.default_cover);
-            }
+            setBitmap(expandedView, notification, url, bitmap, expandedSize);
+
             expandedView.setTextViewText(R.id.notification_artist, song.getArtist());
             expandedView.setTextViewText(R.id.notification_title, song.getTitle());
             expandedView.setOnClickPendingIntent(R.id.notification_prev, prev);
@@ -128,6 +113,18 @@ public class ForegroundManager {
             }
         }
         return notification;
+    }
+
+    private void setBitmap(RemoteViews remoteViews, Notification notification, String url, Bitmap bitmap, int scaledBitmap) {
+        if (bitmap != null) {
+            remoteViews.setImageViewBitmap(R.id.album_art, Bitmap.createScaledBitmap(bitmap, scaledBitmap, scaledBitmap, false));
+        } else if (url != null) {
+            Picasso.with(c)
+                    .load(url)
+                    .into(remoteViews, R.id.album_art, Settings.Notification.FOREGROUND_SERVICE, notification);
+        } else {
+            remoteViews.setImageViewResource(R.id.album_art, R.drawable.default_cover);
+        }
     }
 
     @NonNull

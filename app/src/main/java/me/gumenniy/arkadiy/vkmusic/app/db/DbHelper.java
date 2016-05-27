@@ -20,18 +20,18 @@ import me.gumenniy.arkadiy.vkmusic.model.Song;
 public class DbHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
 
+    public static final String TABLE_SONG = "tableSong";
+    public static final String SONG_ID = "song_id";
+    public static final String TITLE = "title";
+    public static final String ARTIST = "artist";
+    public static final String DURATION = "duration";
+    public static final String PATH = "path";
+    public static final String TABLE_LYRICS = "tableLyrics";
     private static final String DB_NAME = "VkDatabase";
-    private static final String TABLE_SONGS = "tableSong";
     private static final String KEY_ID = "_id";
-    private static final String SONG_ID = "song_id";
-    private static final String TITLE = "title";
-    private static final String ARTIST = "artist";
-    private static final String DURATION = "duration";
-    private static final String PATH = "path";
 
-    private static final String TABLE_LYRICS = "tableLyrics";
-    private static final String LYRICS_ID = "lyrics_id";
-    private static final String LYRICS = "lyrics";
+    public static final String LYRICS_ID = "lyrics_id";
+    public static final String LYRICS = "lyrics";
 
 
     public DbHelper(Context context) {
@@ -42,7 +42,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         Log.e("db", "onCreate()");
         db.execSQL("CREATE TABLE "
-                + TABLE_SONGS + "(" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + TABLE_SONG + "(" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + SONG_ID + " TEXT, "
                 + TITLE + " TEXT, "
                 + ARTIST + " TEXT, "
@@ -58,79 +58,11 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (DATABASE_VERSION < newVersion) {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SONGS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SONG);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_LYRICS);
             onCreate(db);
         }
     }
 
-    public List<Lyrics> fetchLyrics() {
-        List<Lyrics> result = new ArrayList<>();
-
-        SQLiteDatabase db = getWritableDatabase();
-        String[] columns = {LYRICS_ID, LYRICS};
-        Cursor cursor = db.query(TABLE_LYRICS, columns, null, null, null, null, null);
-
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String lyricsId = cursor.getString(0);
-                String text = cursor.getString(1);
-                Lyrics lyrics = new Lyrics(lyricsId, text);
-                result.add(lyrics);
-            }
-            cursor.close();
-        }
-
-        return result;
-    }
-
-    public List<Song> fetchSongs() {
-        List<Song> result = new ArrayList<>();
-
-        SQLiteDatabase db = getWritableDatabase();
-        String[] columns = {SONG_ID, TITLE, ARTIST, LYRICS_ID, PATH, DURATION};
-        Cursor cursor = db.query(TABLE_SONGS, columns, null, null, null, null, null);
-
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String songId = cursor.getString(0);
-                String title = cursor.getString(1);
-                String artist = cursor.getString(2);
-                String lyricsId = cursor.getString(3);
-                String path = cursor.getString(4);
-                int duration = cursor.getInt(5);
-                Song song = new Song(songId, title, artist, path, duration, lyricsId, "");
-                Log.e("songs", title + " " + path);
-                result.add(song);
-            }
-            cursor.close();
-        }
-
-        return result;
-    }
-
-    public void saveSong(String path, Song song) {
-        SQLiteDatabase db = getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(SONG_ID, song.getId());
-        values.put(TITLE, song.getTitle());
-        values.put(ARTIST, song.getArtist());
-        values.put(LYRICS_ID, song.getLyricsId());
-        values.put(DURATION, song.getDuration());
-        values.put(PATH, path);
-
-        db.insert(TABLE_SONGS, null, values);
-    }
-
-    public void saveLyrics(Lyrics lyrics) {
-        Log.e("lyrics", lyrics.getLyricsId() + " " + lyrics.getText());
-        SQLiteDatabase db = getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(LYRICS_ID, lyrics.getLyricsId());
-        values.put(LYRICS, lyrics.getText());
-
-        db.insert(TABLE_LYRICS, null, values);
-    }
+//
 }

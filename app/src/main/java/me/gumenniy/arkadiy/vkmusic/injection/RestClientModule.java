@@ -26,6 +26,8 @@ import dagger.Provides;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
 import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
 import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
+import me.gumenniy.arkadiy.vkmusic.app.db.SQLiteStorageFactory;
+import me.gumenniy.arkadiy.vkmusic.app.db.StorageFactory;
 import me.gumenniy.arkadiy.vkmusic.model.Album;
 import me.gumenniy.arkadiy.vkmusic.model.Artwork;
 import me.gumenniy.arkadiy.vkmusic.model.SongCache;
@@ -72,6 +74,12 @@ public class RestClientModule {
         return okClient;
     }
 
+
+    @Provides
+    public StorageFactory provideStorageFactory(DbHelper helper) {
+        return new SQLiteStorageFactory(helper);
+    }
+
     @Provides
     @Singleton
     public Picasso providePicasso(OkHttpClient client) {
@@ -82,8 +90,9 @@ public class RestClientModule {
     }
 
     @Provides
-    public SupportLoader provideImageLoader(LastFMApi lastFMApi, VkApi vkApi,  UserSession userSession) {
-        return new SupportLoader(lastFMApi, vkApi, app, userSession);
+    @Singleton
+    public SupportLoader provideImageLoader(LastFMApi lastFMApi, VkApi vkApi,  UserSession userSession, StorageFactory factory) {
+        return new SupportLoader(lastFMApi, vkApi, app, userSession, factory);
     }
 
     @Provides
@@ -123,8 +132,8 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    public SongCache provideSongCache(DbHelper helper) {
-        return new SongCache(helper);
+    public SongCache provideSongCache(StorageFactory factory) {
+        return new SongCache(factory);
     }
 
     @Provides
