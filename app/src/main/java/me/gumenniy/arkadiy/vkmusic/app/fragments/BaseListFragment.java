@@ -128,6 +128,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         height = dimension * metrics;
 
         bottomProgressBar.setTranslationY(height);
+
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(manager);
         adapter = getListAdapter();
@@ -149,7 +150,6 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         ButterKnife.unbind(this);
         presenter.bindView(null);
     }
@@ -182,7 +182,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
     private void animate(final View view, final boolean makeVisible) {
         boolean animate = (visible && !makeVisible)
                 || (!visible && makeVisible);
-        visible = makeVisible;
+
         if (animate) {
             if (makeVisible) {
                 view.animate().cancel();
@@ -193,8 +193,9 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
                 view.setTranslationY(0);
                 view.animate().translationY(height);
             }
-            Log.e("view", view.getY() + " " + view.getTranslationY() + " " + view.getHeight());
         }
+
+        visible = makeVisible;
     }
 
     @Override

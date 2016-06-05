@@ -2,9 +2,8 @@ package me.gumenniy.arkadiy.vkmusic.app;
 
 import android.app.Application;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
-import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
+//import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
 import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
 import me.gumenniy.arkadiy.vkmusic.injection.RestClientModule;
 import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
@@ -16,6 +15,10 @@ public class MusicApplication extends Application {
 
     private RestComponent component;
 
+    public static MusicApplication getApp(Context context) {
+        return (MusicApplication) context.getApplicationContext();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -26,10 +29,6 @@ public class MusicApplication extends Application {
         component = DaggerRestComponent.builder()
                 .restClientModule(new RestClientModule(this))
                 .build();
-    }
-
-    public static MusicApplication getApp(Context context) {
-        return (MusicApplication) context.getApplicationContext();
     }
 
     public RestComponent getComponent() {

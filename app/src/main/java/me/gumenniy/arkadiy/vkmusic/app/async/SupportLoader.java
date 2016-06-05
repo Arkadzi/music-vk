@@ -142,6 +142,7 @@ public class SupportLoader {
                 url = null;
             }
         }
+        Log.e("url", "" + url);
         return url;
     }
 
@@ -216,6 +217,7 @@ public class SupportLoader {
         handler.post(new Runnable() {
             @Override
             public void run() {
+                Log.e("url", "post " + url);
                 if (url != null) {
                     urls.put(song.getKey(), url);
                     if (!url.equals(NONE)) {
