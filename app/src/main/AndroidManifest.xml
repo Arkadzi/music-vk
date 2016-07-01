@@ -14,11 +14,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".app.LoginActivity"
+            android:name=".presentation.activities.LoginActivity"
             android:configChanges="orientation|screenSize"
             android:label="Login"></activity>
         <activity
-            android:name=".app.MainActivity"
+            android:name=".presentation.activities.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,10 +28,10 @@
         </activity>
 
         <service
-            android:name=".app.MusicService"
+            android:name=".data.MusicService"
             android:exported="false" />
         <service
-            android:name=".app.LoadService"
+            android:name=".data.LoadService"
             android:exported="false"></service>
     </application>
 

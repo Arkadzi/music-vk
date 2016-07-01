@@ -10,7 +10,7 @@ import android.support.annotation.Nullable;
 
 import java.util.List;
 
-import me.gumenniy.arkadiy.vkmusic.model.Song;
+import me.gumenniy.arkadiy.vkmusic.domain.model.Song;
 
 /**
  * Created by Arkadiy on 18.03.2016.

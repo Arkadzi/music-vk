@@ -17,12 +17,10 @@ public class AsyncExecutor extends HandlerThread {
     }
 
     public void postTask(int what, Runnable workTask, boolean removeWhats, boolean postAtFront) {
-        Log.e("handler", "postTask()");
         if (removeWhats) {
             workerHandler.removeMessages(what);
         }
         Message msg = workerHandler.obtainMessage(what, workTask);
-
         if (postAtFront) {
             workerHandler.sendMessageAtFrontOfQueue(msg);
         } else {
@@ -35,7 +33,6 @@ public class AsyncExecutor extends HandlerThread {
         workerHandler = new Handler(getLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-                Log.e("handler", "handleMessage() " + Thread.currentThread());
                 Runnable task = (Runnable) msg.obj;
                 task.run();
                 return true;

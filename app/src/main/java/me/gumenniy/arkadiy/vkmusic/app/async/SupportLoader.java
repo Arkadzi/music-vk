@@ -15,20 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Singleton;
-
-import me.gumenniy.arkadiy.vkmusic.app.db.DbHelper;
-import me.gumenniy.arkadiy.vkmusic.app.db.Storage;
-import me.gumenniy.arkadiy.vkmusic.app.db.StorageFactory;
-import me.gumenniy.arkadiy.vkmusic.model.Artwork;
-import me.gumenniy.arkadiy.vkmusic.model.Lyrics;
-import me.gumenniy.arkadiy.vkmusic.model.Song;
-import me.gumenniy.arkadiy.vkmusic.rest.LastFMApi;
-import me.gumenniy.arkadiy.vkmusic.rest.UserSession;
-import me.gumenniy.arkadiy.vkmusic.rest.VkApi;
-import me.gumenniy.arkadiy.vkmusic.rest.model.VKResult;
-import me.gumenniy.arkadiy.vkmusic.utils.Settings;
-import me.gumenniy.arkadiy.vkmusic.utils.UtilMethods;
+import me.gumenniy.arkadiy.vkmusic.data.db.Storage;
+import me.gumenniy.arkadiy.vkmusic.data.db.StorageFactory;
+import me.gumenniy.arkadiy.vkmusic.domain.model.Artwork;
+import me.gumenniy.arkadiy.vkmusic.domain.model.Lyrics;
+import me.gumenniy.arkadiy.vkmusic.domain.model.Song;
+import me.gumenniy.arkadiy.vkmusic.data.rest.LastFMApi;
+import me.gumenniy.arkadiy.vkmusic.data.rest.UserSession;
+import me.gumenniy.arkadiy.vkmusic.data.rest.VkApi;
+import me.gumenniy.arkadiy.vkmusic.data.rest.model.VKResult;
+import me.gumenniy.arkadiy.vkmusic.app.utils.Settings;
+import me.gumenniy.arkadiy.vkmusic.app.utils.UtilMethods;
 import retrofit.Call;
 import retrofit.Response;
 

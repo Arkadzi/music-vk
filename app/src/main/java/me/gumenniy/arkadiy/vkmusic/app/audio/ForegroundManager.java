@@ -15,11 +15,11 @@ import android.widget.RemoteViews;
 import com.squareup.picasso.Picasso;
 
 import me.gumenniy.arkadiy.vkmusic.R;
-import me.gumenniy.arkadiy.vkmusic.app.MainActivity;
-import me.gumenniy.arkadiy.vkmusic.app.MusicService;
+import me.gumenniy.arkadiy.vkmusic.presentation.activities.MainActivity;
+import me.gumenniy.arkadiy.vkmusic.data.MusicService;
 import me.gumenniy.arkadiy.vkmusic.app.async.SupportLoader;
-import me.gumenniy.arkadiy.vkmusic.model.Song;
-import me.gumenniy.arkadiy.vkmusic.utils.Settings;
+import me.gumenniy.arkadiy.vkmusic.domain.model.Song;
+import me.gumenniy.arkadiy.vkmusic.app.utils.Settings;
 
 public class ForegroundManager {
     private final Service c;
