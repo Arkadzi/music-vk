@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.FriendAdapter;
-import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationComponent;
 import me.gumenniy.arkadiy.vkmusic.domain.model.Friend;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.FriendListPresenter;
 
@@ -35,7 +35,7 @@ public class FriendListFragment extends BaseListFragment<Friend, FriendListPrese
     }
 
     @Override
-    protected void inject(RestComponent component) {
+    protected void inject(ApplicationComponent component) {
         component.inject(this);
     }
 

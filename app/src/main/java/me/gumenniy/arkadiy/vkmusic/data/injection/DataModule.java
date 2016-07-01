@@ -1,5 +1,6 @@
-package me.gumenniy.arkadiy.vkmusic.injection;
+package me.gumenniy.arkadiy.vkmusic.data.injection;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
@@ -45,20 +46,16 @@ import retrofit.Retrofit;
  * Created by Arkadiy on 07.03.2016.
  */
 @Module
-public class RestClientModule {
-    private MusicApplication app;
+public class DataModule {
     public static String baseUrl = "https://api.vk.com/method/";
 
-    public RestClientModule(MusicApplication app) {
-        this.app = app;
-    }
 
     @Provides
     @Singleton
-    public OkHttpClient provideOkClient() {
+    public OkHttpClient provideOkClient(Context context) {
         OkHttpClient okClient = new OkHttpClient();
         okClient.setReadTimeout(10, TimeUnit.SECONDS);
-        okClient.setCache(new Cache(app.getCacheDir(), Integer.MAX_VALUE));
+        okClient.setCache(new Cache(context.getCacheDir(), Integer.MAX_VALUE));
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         okClient.interceptors().add(interceptor);
@@ -82,8 +79,8 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    public Picasso providePicasso(OkHttpClient client) {
-        return new Picasso.Builder(app)
+    public Picasso providePicasso(OkHttpClient client, Context context) {
+        return new Picasso.Builder(context)
 //                .downloader(new OkHttpDownloader(client))
                 .defaultBitmapConfig(Bitmap.Config.RGB_565)
                 .build();
@@ -91,8 +88,8 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    public SupportLoader provideImageLoader(LastFMApi lastFMApi, VkApi vkApi,  UserSession userSession, StorageFactory factory) {
-        return new SupportLoader(lastFMApi, vkApi, app, userSession, factory);
+    public SupportLoader provideImageLoader(Context context, LastFMApi lastFMApi, VkApi vkApi,  UserSession userSession, StorageFactory factory) {
+        return new SupportLoader(lastFMApi, vkApi, context, userSession, factory);
     }
 
     @Provides
@@ -126,8 +123,8 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    public DbHelper provideDBHelper() {
-        return new DbHelper(app);
+    public DbHelper provideDBHelper(Context context) {
+        return new DbHelper(context);
     }
 
     @Provides
@@ -138,14 +135,14 @@ public class RestClientModule {
 
     @Provides
     @Singleton
-    SharedPreferences providePreferences() {
-        return PreferenceManager.getDefaultSharedPreferences(app);
+    SharedPreferences providePreferences(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     @Provides
     @Singleton
-    UserSession provideUserSession(SharedPreferences prefs) {
-        return new UserSession(prefs, app);
+    UserSession provideUserSession(SharedPreferences prefs, Context context) {
+        return new UserSession(prefs, context);
     }
 
     @Provides

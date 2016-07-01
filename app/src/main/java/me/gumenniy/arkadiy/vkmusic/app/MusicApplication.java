@@ -3,17 +3,16 @@ package me.gumenniy.arkadiy.vkmusic.app;
 import android.app.Application;
 import android.content.Context;
 
-//import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
-import me.gumenniy.arkadiy.vkmusic.injection.DaggerRestComponent;
-import me.gumenniy.arkadiy.vkmusic.injection.RestClientModule;
-import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationModule;
+import me.gumenniy.arkadiy.vkmusic.injection.DaggerApplicationComponent;
 
 /**
  * Created by Arkadiy on 24.02.2016.
  */
 public class MusicApplication extends Application {
 
-    private RestComponent component;
+    private ApplicationComponent component;
 
     public static MusicApplication getApp(Context context) {
         return (MusicApplication) context.getApplicationContext();
@@ -26,12 +25,12 @@ public class MusicApplication extends Application {
     }
 
     private void buildAppComponent() {
-        component = DaggerRestComponent.builder()
-                .restClientModule(new RestClientModule(this))
+        component = DaggerApplicationComponent.builder()
+                .applicationModule(new ApplicationModule(this))
                 .build();
     }
 
-    public RestComponent getComponent() {
+    public ApplicationComponent getComponent() {
         return component;
     }
 }

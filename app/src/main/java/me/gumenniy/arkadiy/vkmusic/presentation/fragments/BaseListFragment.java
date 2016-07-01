@@ -29,7 +29,7 @@ import me.gumenniy.arkadiy.vkmusic.presentation.activities.LoginActivity;
 import me.gumenniy.arkadiy.vkmusic.app.MusicApplication;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.dialogs.ProgressDialogFragment;
-import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationComponent;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.BaseListPresenter;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.BaseView;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.State;
@@ -70,7 +70,7 @@ public abstract class BaseListFragment<D, P extends BaseListPresenter<D>> extend
         inject(MusicApplication.getApp(getActivity()).getComponent());
     }
 
-    protected abstract void inject(RestComponent component);
+    protected abstract void inject(ApplicationComponent component);
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.dialogs.SongDialogFragment;
-import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationComponent;
 import me.gumenniy.arkadiy.vkmusic.domain.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.SongListPresenter;
 
@@ -37,7 +37,7 @@ public class SongListFragment extends BaseListFragment<Song, SongListPresenter> 
     }
 
     @Override
-    protected void inject(RestComponent component) {
+    protected void inject(ApplicationComponent component) {
         component.inject(this);
     }
 

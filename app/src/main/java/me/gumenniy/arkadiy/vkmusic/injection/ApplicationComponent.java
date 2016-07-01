@@ -21,10 +21,10 @@ import me.gumenniy.arkadiy.vkmusic.presentation.fragments.SongListFragment;
  * Created by Arkadiy on 07.03.2016.
  */
 @Component(
-        modules = RestClientModule.class
+        modules = ApplicationModule.class
 )
 @Singleton
-public interface RestComponent {
+public interface ApplicationComponent {
     void inject(SongListFragment fragment);
     void inject(FriendListFragment fragment);
     void inject(GroupListFragment fragment);

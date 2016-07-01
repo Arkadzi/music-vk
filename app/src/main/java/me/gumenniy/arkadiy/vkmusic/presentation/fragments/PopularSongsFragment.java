@@ -16,7 +16,7 @@ import me.gumenniy.arkadiy.vkmusic.R;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.AbstractListAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.adapters.SongAdapter;
 import me.gumenniy.arkadiy.vkmusic.presentation.dialogs.PopularSongDialogFragment;
-import me.gumenniy.arkadiy.vkmusic.injection.RestComponent;
+import me.gumenniy.arkadiy.vkmusic.injection.ApplicationComponent;
 import me.gumenniy.arkadiy.vkmusic.domain.model.Song;
 import me.gumenniy.arkadiy.vkmusic.presentation.presenter.PopularSongsPresenter;
 
@@ -98,7 +98,7 @@ public class PopularSongsFragment extends BaseListFragment<Song, PopularSongsPre
     }
 
     @Override
-    protected void inject(RestComponent component) {
+    protected void inject(ApplicationComponent component) {
         component.inject(this);
     }
 
